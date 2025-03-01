@@ -53,6 +53,10 @@ export const FoodProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const fetchFoods = async () => {
       setIsLoading(true);
       try {
+        const { data: userData } = await supabase.auth.getUser();
+        // For now, use a default user ID if not authenticated
+        const userId = userData?.user?.id || '00000000-0000-0000-0000-000000000000';
+        
         const { data, error } = await supabase
           .from('foods')
           .select('*')
@@ -121,9 +125,13 @@ export const FoodProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Add food to Supabase
   const addFood = async (food: Food) => {
     try {
+      const { data: userData } = await supabase.auth.getUser();
+      // For now, use a default user ID if not authenticated
+      const userId = userData?.user?.id || '00000000-0000-0000-0000-000000000000';
+      
       const { data, error } = await supabase
         .from('foods')
-        .insert([{
+        .insert({
           id: food.id || uuidv4(),
           name: food.name,
           calories: food.calories,
@@ -132,8 +140,9 @@ export const FoodProvider: React.FC<{ children: React.ReactNode }> = ({ children
           fat: food.fat,
           date: formatDate(food.date),
           meal_type: food.mealType || 'snack',
-          image_url: food.image
-        }])
+          image_url: food.image,
+          user_id: userId  // Add the user_id field
+        })
         .select()
         .single();
 
