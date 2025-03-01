@@ -3,11 +3,19 @@ import React from 'react';
 import { useFood, Food } from '@/context/FoodContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Trash2, Info } from 'lucide-react';
+import { Trash2, Info, Edit } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 
-const FoodItem: React.FC<{ food: Food }> = ({ food }) => {
+interface FoodItemProps {
+  food: Food;
+}
+
+interface FoodListProps {
+  mealTypeFilter: string | null;
+}
+
+const FoodItem: React.FC<FoodItemProps> = ({ food }) => {
   const { removeFood } = useFood();
 
   const handleDelete = () => {
@@ -19,8 +27,18 @@ const FoodItem: React.FC<{ food: Food }> = ({ food }) => {
     return new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
+  // Default food image if none is provided
+  const foodImage = food.image || 'https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?auto=format&fit=crop&w=100&q=60';
+
   return (
-    <div className="flex items-center justify-between p-3 border-b border-border last:border-0 group hover:bg-secondary/20 transition-colors rounded-md">
+    <div className="flex gap-3 p-3 border-b border-border last:border-0 group hover:bg-secondary/20 transition-colors rounded-md">
+      <div className="w-12 h-12 rounded-md overflow-hidden shrink-0">
+        <img 
+          src={foodImage} 
+          alt={food.name} 
+          className="w-full h-full object-cover"
+        />
+      </div>
       <div className="flex-1">
         <div className="flex justify-between">
           <h4 className="font-medium">{food.name}</h4>
@@ -35,7 +53,10 @@ const FoodItem: React.FC<{ food: Food }> = ({ food }) => {
           </div>
         </div>
       </div>
-      <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <Button variant="ghost" size="icon" className="h-8 w-8">
+          <Edit className="h-4 w-4" />
+        </Button>
         <Link to={`/food/${food.id}`}>
           <Button variant="ghost" size="icon" className="h-8 w-8">
             <Info className="h-4 w-4" />
@@ -49,11 +70,18 @@ const FoodItem: React.FC<{ food: Food }> = ({ food }) => {
   );
 };
 
-const FoodList: React.FC = () => {
+const FoodList: React.FC<FoodListProps> = ({ mealTypeFilter }) => {
   const { foods, clearFoods } = useFood();
+  
+  // Filter foods by today's date
   const todayFoods = foods.filter(
     food => new Date(food.date).toDateString() === new Date().toDateString()
   );
+  
+  // Apply meal type filter if specified
+  const filteredFoods = mealTypeFilter 
+    ? todayFoods.filter(food => food.mealType === mealTypeFilter) 
+    : todayFoods;
 
   const handleClearAll = () => {
     if (window.confirm('¿Estás seguro de que quieres eliminar todos los alimentos?')) {
@@ -62,7 +90,7 @@ const FoodList: React.FC = () => {
     }
   };
 
-  if (todayFoods.length === 0) {
+  if (filteredFoods.length === 0) {
     return (
       <Card className="glass-card flex flex-col items-center justify-center py-10 animate-appear">
         <div className="text-center p-8">
@@ -77,16 +105,9 @@ const FoodList: React.FC = () => {
 
   return (
     <Card className="glass-card animate-appear">
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-lg font-medium">Alimentos de hoy</CardTitle>
-        <Button variant="ghost" size="sm" onClick={handleClearAll} className="h-8">
-          <Trash2 className="h-4 w-4 mr-2" />
-          Limpiar
-        </Button>
-      </CardHeader>
-      <CardContent className="pt-2">
+      <CardContent className="pt-6">
         <div className="space-y-1">
-          {todayFoods.map((food) => (
+          {filteredFoods.map((food) => (
             <FoodItem key={food.id} food={food} />
           ))}
         </div>

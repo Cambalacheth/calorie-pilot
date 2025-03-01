@@ -10,6 +10,7 @@ export interface Food {
   fat: number;
   date: Date;
   image?: string;
+  mealType?: string; // breakfast, lunch, dinner, snack
 }
 
 export interface FoodLog {
@@ -32,7 +33,42 @@ interface FoodContextProps {
 const FoodContext = createContext<FoodContextProps | undefined>(undefined);
 
 export const FoodProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [foods, setFoods] = useState<Food[]>([]);
+  const [foods, setFoods] = useState<Food[]>([
+    // Sample data for testing UI
+    {
+      id: '1',
+      name: 'Ensalada de pollo',
+      calories: 350,
+      protein: 30,
+      carbs: 15,
+      fat: 12,
+      date: new Date(),
+      mealType: 'lunch',
+      image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=100&q=60'
+    },
+    {
+      id: '2',
+      name: 'Yogur con frutas',
+      calories: 180,
+      protein: 10,
+      carbs: 25,
+      fat: 5,
+      date: new Date(),
+      mealType: 'breakfast',
+      image: 'https://images.unsplash.com/photo-1583531352515-8884af319dc0?auto=format&fit=crop&w=100&q=60'
+    },
+    {
+      id: '3',
+      name: 'Pasta con salsa',
+      calories: 450,
+      protein: 15,
+      carbs: 65,
+      fat: 8,
+      date: new Date(),
+      mealType: 'dinner',
+      image: 'https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?auto=format&fit=crop&w=100&q=60'
+    }
+  ]);
   const [dailyLogs, setDailyLogs] = useState<Record<string, FoodLog>>({});
 
   const formatDate = (date: Date): string => {
@@ -82,7 +118,7 @@ export const FoodProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Calculate daily totals
   const today = formatDate(new Date());
-  const todayEntries = dailyLogs[today]?.entries || [];
+  const todayEntries = dailyLogs[today]?.entries || foods.filter(food => formatDate(food.date) === today);
   
   const dailyCalories = todayEntries.reduce((sum, food) => sum + food.calories, 0);
   const dailyProtein = todayEntries.reduce((sum, food) => sum + food.protein, 0);
