@@ -1,5 +1,5 @@
 
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useState, useContext, useEffect } from 'react';
 
 export interface Food {
   id: string;
@@ -28,6 +28,8 @@ interface FoodContextProps {
   dailyCarbs: number;
   dailyFat: number;
   clearFoods: () => void;
+  streak: number;
+  activeDates: string[];
 }
 
 const FoodContext = createContext<FoodContextProps | undefined>(undefined);
@@ -70,10 +72,29 @@ export const FoodProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   ]);
   const [dailyLogs, setDailyLogs] = useState<Record<string, FoodLog>>({});
+  const [streak, setStreak] = useState<number>(5); // Simulamos una racha de 5 días
+  const [activeDates, setActiveDates] = useState<string[]>([]); // Fechas con entradas registradas
 
   const formatDate = (date: Date): string => {
     return date.toISOString().split('T')[0];
   };
+
+  // Actualiza las fechas activas cuando cambian los alimentos
+  useEffect(() => {
+    const dates = foods.map(food => formatDate(food.date));
+    const uniqueDates = [...new Set(dates)].sort();
+    setActiveDates(uniqueDates);
+    
+    // Calculamos la racha basada en las fechas consecutivas
+    // En una app real, este cálculo sería más complejo
+    if (uniqueDates.length > 0) {
+      // Simulamos una racha basada en la cantidad de fechas únicas
+      // En una implementación real, verificaríamos fechas consecutivas
+      setStreak(Math.min(uniqueDates.length, 5)); 
+    } else {
+      setStreak(0);
+    }
+  }, [foods]);
 
   const addFood = (food: Food) => {
     setFoods(prevFoods => [...prevFoods, food]);
@@ -135,7 +156,9 @@ export const FoodProvider: React.FC<{ children: React.ReactNode }> = ({ children
       dailyProtein,
       dailyCarbs,
       dailyFat,
-      clearFoods
+      clearFoods,
+      streak,
+      activeDates
     }}>
       {children}
     </FoodContext.Provider>
