@@ -6,7 +6,18 @@ import MacronutrientChart from '@/components/MacronutrientChart';
 import FoodList from '@/components/FoodList';
 import { useFood } from '@/context/FoodContext';
 import { Button } from '@/components/ui/button';
-import { Calendar, Camera, Settings, Bell, ChevronDown, PlusCircle } from 'lucide-react';
+import { 
+  Calendar, 
+  Camera, 
+  Settings, 
+  Bell, 
+  ChevronDown, 
+  PlusCircle,
+  BarChart2,
+  NotebookPen,
+  Brain,
+  BookOpenText
+} from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import DailyProgress from '@/components/DailyProgress';
@@ -131,7 +142,7 @@ const Dashboard = () => {
       </div>
       
       {/* White Content Area */}
-      <div className="flex-1 bg-white text-slate-800 rounded-t-3xl p-4">
+      <div className="flex-1 bg-white text-slate-800 rounded-t-3xl p-4 pb-20">
         <div className="flex justify-between items-center mt-2 mb-4">
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4 text-emerald-600" />
@@ -195,26 +206,39 @@ const Dashboard = () => {
             </CardContent>
           </Card>
         </div>
+      </div>
+      
+      {/* Bottom Navigation Bar */}
+      <div className="fixed bottom-0 left-0 right-0 bg-[#FFF8E1] text-[#212121] border-t shadow-lg flex justify-around items-center px-2 z-10">
+        <Link to="/dashboard" className="flex flex-col items-center py-2 px-3 text-center">
+          <NotebookPen className="h-6 w-6 text-[#FF7043]" />
+          <span className="text-xs mt-1 font-medium">Diary</span>
+        </Link>
         
-        {/* Bottom Navigation */}
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t flex justify-around p-3">
-          <Button variant="ghost" size="sm" className="flex flex-col items-center gap-1 h-auto">
-            <Calendar className="h-5 w-5 text-slate-400" />
-            <span className="text-xs text-slate-400">Diary</span>
-          </Button>
-          
-          <Button variant="ghost" size="sm" className="flex flex-col items-center gap-1 h-auto">
-            <div className="w-10 h-10 rounded-full bg-emerald-600 flex items-center justify-center -mt-6">
-              <PlusCircle className="h-6 w-6 text-white" />
-            </div>
-            <span className="text-xs text-slate-400 mt-1">Add</span>
-          </Button>
-          
-          <Button variant="ghost" size="sm" className="flex flex-col items-center gap-1 h-auto">
-            <Camera className="h-5 w-5 text-slate-400" />
-            <span className="text-xs text-slate-400">Scan</span>
-          </Button>
+        <Link to="/analysis" className="flex flex-col items-center py-2 px-3 text-center">
+          <BarChart2 className="h-6 w-6" />
+          <span className="text-xs mt-1">Progress</span>
+        </Link>
+        
+        <div className="flex flex-col items-center -mt-5">
+          <Link 
+            to="/add-food" 
+            className="w-14 h-14 rounded-full bg-[#FF7043] flex items-center justify-center shadow-lg border-4 border-[#FFF8E1]"
+          >
+            <PlusCircle className="h-8 w-8 text-white" />
+          </Link>
+          <span className="text-xs mt-1">Add</span>
         </div>
+        
+        <Link to="/nutrient-analysis" className="flex flex-col items-center py-2 px-3 text-center">
+          <Brain className="h-6 w-6" />
+          <span className="text-xs mt-1">Analysis</span>
+        </Link>
+        
+        <Link to="/recipes" className="flex flex-col items-center py-2 px-3 text-center">
+          <BookOpenText className="h-6 w-6" />
+          <span className="text-xs mt-1">Recipes</span>
+        </Link>
       </div>
     </div>
   );
