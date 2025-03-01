@@ -16,20 +16,31 @@ import {
   BarChart2,
   NotebookPen,
   Brain,
-  BookOpenText
+  BookOpenText,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, subDays, addDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import DailyProgress from '@/components/DailyProgress';
 import { Card, CardContent } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
 
 const Dashboard = () => {
-  const { dailyCalories, dailyProtein, dailyCarbs, dailyFat } = useFood();
+  const { foods, dailyCalories, dailyProtein, dailyCarbs, dailyFat } = useFood();
   const [selectedMealType, setSelectedMealType] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState(new Date());
 
-  const today = new Date();
-  const formattedDate = format(today, "'Today,' MMMM d", { locale: es });
+  const formattedDate = format(selectedDate, "'Today,' MMMM d", { locale: es });
+  const displayDate = format(selectedDate, "EEEE, MMMM d");
+  
+  const handlePreviousDay = () => {
+    setSelectedDate(prev => subDays(prev, 1));
+  };
+  
+  const handleNextDay = () => {
+    setSelectedDate(prev => addDays(prev, 1));
+  };
 
   const handleMealTypeFilter = (type: string) => {
     setSelectedMealType(prevType => prevType === type ? null : type);
@@ -37,6 +48,19 @@ const Dashboard = () => {
 
   const calorieGoal = 2000;
   const remainingCalories = Math.max(calorieGoal - dailyCalories, 0);
+  
+  // Filter foods by meal type
+  const getFoodsByMealType = (mealType: string) => {
+    return foods.filter(food => 
+      food.mealType === mealType && 
+      format(new Date(food.date), 'yyyy-MM-dd') === format(selectedDate, 'yyyy-MM-dd')
+    );
+  };
+  
+  const breakfastFoods = getFoodsByMealType('breakfast');
+  const lunchFoods = getFoodsByMealType('lunch');
+  const dinnerFoods = getFoodsByMealType('dinner');
+  const snackFoods = getFoodsByMealType('snack');
 
   return (
     <div className="min-h-screen bg-emerald-800 text-white flex flex-col">
@@ -61,7 +85,7 @@ const Dashboard = () => {
       </div>
 
       {/* Main Circular Progress */}
-      <div className="flex flex-col items-center justify-center px-4 py-8">
+      <div className="flex flex-col items-center justify-center px-4 py-6">
         <div className="relative w-60 h-60 flex items-center justify-center">
           <svg className="w-full h-full" viewBox="0 0 100 100">
             <circle 
@@ -89,19 +113,20 @@ const Dashboard = () => {
             <div className="text-sm opacity-80">KCAL LEFT</div>
           </div>
           
-          <div className="absolute top-2 left-1/2 -translate-x-1/2 text-center text-xs">
+          {/* Moved outside the circle to prevent overlapping */}
+          <div className="absolute -top-10 left-1/2 -translate-x-1/2 text-center text-xs bg-emerald-700/70 px-3 py-1 rounded-full">
             <div className="font-bold text-sm">0</div>
             <div className="opacity-70">BURNED</div>
           </div>
           
-          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-center text-xs">
+          <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 text-center text-xs bg-emerald-700/70 px-3 py-1 rounded-full">
             <div className="font-bold text-sm">{dailyCalories}</div>
             <div className="opacity-70">EARNED</div>
           </div>
         </div>
         
         {/* Macronutrients Display */}
-        <div className="w-full mt-4 grid grid-cols-3 gap-4 text-center">
+        <div className="w-full mt-8 grid grid-cols-3 gap-4 text-center">
           <div>
             <div className="uppercase text-xs opacity-70">Carbs</div>
             <div className="font-semibold">{dailyCarbs.toFixed(1)}g</div>
@@ -135,76 +160,263 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
-        
-        <Button variant="ghost" size="sm" className="text-emerald-100 mt-4">
-          <ChevronDown className="h-5 w-5" />
-        </Button>
       </div>
       
       {/* White Content Area */}
       <div className="flex-1 bg-white text-slate-800 rounded-t-3xl p-4 pb-20">
+        {/* Date Navigation */}
         <div className="flex justify-between items-center mt-2 mb-4">
+          <Button variant="ghost" size="sm" onClick={handlePreviousDay} className="text-emerald-600">
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4 text-emerald-600" />
-            <span className="text-sm font-medium">{format(today, "EEEE, MMMM d")}</span>
+            <span className="text-sm font-medium">{displayDate}</span>
           </div>
-          <Button variant="ghost" size="sm" className="text-emerald-600">
-            <ChevronDown className="h-4 w-4" />
+          
+          <Button variant="ghost" size="sm" onClick={handleNextDay} className="text-emerald-600">
+            <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
         
-        {/* Meal Cards */}
-        <div className="space-y-3">
-          <Card className="shadow-sm">
-            <CardContent className="p-3 flex justify-between items-center">
-              <div className="flex items-center gap-3">
-                <div className="bg-blue-100 p-2 rounded-lg">
-                  <img src="/lovable-uploads/0a8a6a5b-8c67-43e2-8540-2330a7747ec9.png" alt="Breakfast" className="w-6 h-6" />
-                </div>
-                <div>
-                  <div className="font-medium">Add breakfast</div>
-                  <div className="text-xs text-slate-500">Recommended: 640 - 675 kcal</div>
-                </div>
+        {/* Meal Sections */}
+        <div className="space-y-4">
+          {/* Breakfast Section */}
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <h3 className="text-md font-medium text-slate-700">Breakfast</h3>
+              <Link to="/add-food?mealType=breakfast">
+                <Button variant="ghost" size="sm" className="text-emerald-600 h-auto py-1">
+                  <PlusCircle className="h-4 w-4 mr-1" />
+                  <span className="text-xs">Add</span>
+                </Button>
+              </Link>
+            </div>
+            
+            {breakfastFoods.length > 0 ? (
+              <div className="space-y-2">
+                {breakfastFoods.map(food => (
+                  <Card key={food.id} className="shadow-sm overflow-hidden">
+                    <CardContent className="p-3 flex justify-between items-center">
+                      <div className="flex items-center gap-3">
+                        <div className="bg-blue-100 p-2 rounded-lg w-12 h-12 flex items-center justify-center overflow-hidden">
+                          {food.image ? (
+                            <img src={food.image} alt={food.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <img src="/lovable-uploads/0a8a6a5b-8c67-43e2-8540-2330a7747ec9.png" alt="Food" className="w-6 h-6" />
+                          )}
+                        </div>
+                        <div>
+                          <div className="font-medium">{food.name}</div>
+                          <div className="flex gap-2 text-xs text-slate-500">
+                            <span>{food.calories} kcal</span>
+                            <span className="text-indigo-600">{food.protein}g P</span>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
-              <Button variant="ghost" size="icon" className="text-emerald-600">
-                <PlusCircle className="h-5 w-5" />
-              </Button>
-            </CardContent>
-          </Card>
+            ) : (
+              <Card className="shadow-sm">
+                <CardContent className="p-3 flex justify-between items-center">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-blue-100 p-2 rounded-lg">
+                      <img src="/lovable-uploads/0a8a6a5b-8c67-43e2-8540-2330a7747ec9.png" alt="Breakfast" className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <div className="font-medium">Add breakfast</div>
+                      <div className="text-xs text-slate-500">Recommended: 640 - 675 kcal</div>
+                    </div>
+                  </div>
+                  <Link to="/add-food?mealType=breakfast">
+                    <Button variant="ghost" size="icon" className="text-emerald-600">
+                      <PlusCircle className="h-5 w-5" />
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            )}
+          </div>
           
-          <Card className="shadow-sm">
-            <CardContent className="p-3 flex justify-between items-center">
-              <div className="flex items-center gap-3">
-                <div className="bg-orange-100 p-2 rounded-lg">
-                  <img src="/lovable-uploads/0a8a6a5b-8c67-43e2-8540-2330a7747ec9.png" alt="Lunch" className="w-6 h-6" />
-                </div>
-                <div>
-                  <div className="font-medium">Add lunch</div>
-                  <div className="text-xs text-slate-500">Recommended: 697 - 703 kcal</div>
-                </div>
+          {/* Lunch Section */}
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <h3 className="text-md font-medium text-slate-700">Lunch</h3>
+              <Link to="/add-food?mealType=lunch">
+                <Button variant="ghost" size="sm" className="text-emerald-600 h-auto py-1">
+                  <PlusCircle className="h-4 w-4 mr-1" />
+                  <span className="text-xs">Add</span>
+                </Button>
+              </Link>
+            </div>
+            
+            {lunchFoods.length > 0 ? (
+              <div className="space-y-2">
+                {lunchFoods.map(food => (
+                  <Card key={food.id} className="shadow-sm overflow-hidden">
+                    <CardContent className="p-3 flex justify-between items-center">
+                      <div className="flex items-center gap-3">
+                        <div className="bg-orange-100 p-2 rounded-lg w-12 h-12 flex items-center justify-center overflow-hidden">
+                          {food.image ? (
+                            <img src={food.image} alt={food.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <img src="/lovable-uploads/0a8a6a5b-8c67-43e2-8540-2330a7747ec9.png" alt="Food" className="w-6 h-6" />
+                          )}
+                        </div>
+                        <div>
+                          <div className="font-medium">{food.name}</div>
+                          <div className="flex gap-2 text-xs text-slate-500">
+                            <span>{food.calories} kcal</span>
+                            <span className="text-indigo-600">{food.protein}g P</span>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
-              <Button variant="ghost" size="icon" className="text-emerald-600">
-                <PlusCircle className="h-5 w-5" />
-              </Button>
-            </CardContent>
-          </Card>
+            ) : (
+              <Card className="shadow-sm">
+                <CardContent className="p-3 flex justify-between items-center">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-orange-100 p-2 rounded-lg">
+                      <img src="/lovable-uploads/0a8a6a5b-8c67-43e2-8540-2330a7747ec9.png" alt="Lunch" className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <div className="font-medium">Add lunch</div>
+                      <div className="text-xs text-slate-500">Recommended: 697 - 703 kcal</div>
+                    </div>
+                  </div>
+                  <Link to="/add-food?mealType=lunch">
+                    <Button variant="ghost" size="icon" className="text-emerald-600">
+                      <PlusCircle className="h-5 w-5" />
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            )}
+          </div>
           
-          <Card className="shadow-sm">
-            <CardContent className="p-3 flex justify-between items-center">
-              <div className="flex items-center gap-3">
-                <div className="bg-purple-100 p-2 rounded-lg">
-                  <img src="/lovable-uploads/0a8a6a5b-8c67-43e2-8540-2330a7747ec9.png" alt="Dinner" className="w-6 h-6" />
-                </div>
-                <div>
-                  <div className="font-medium">Add dinner</div>
-                  <div className="text-xs text-slate-500">Recommended: 597 - 603 kcal</div>
-                </div>
+          {/* Dinner Section */}
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <h3 className="text-md font-medium text-slate-700">Dinner</h3>
+              <Link to="/add-food?mealType=dinner">
+                <Button variant="ghost" size="sm" className="text-emerald-600 h-auto py-1">
+                  <PlusCircle className="h-4 w-4 mr-1" />
+                  <span className="text-xs">Add</span>
+                </Button>
+              </Link>
+            </div>
+            
+            {dinnerFoods.length > 0 ? (
+              <div className="space-y-2">
+                {dinnerFoods.map(food => (
+                  <Card key={food.id} className="shadow-sm overflow-hidden">
+                    <CardContent className="p-3 flex justify-between items-center">
+                      <div className="flex items-center gap-3">
+                        <div className="bg-purple-100 p-2 rounded-lg w-12 h-12 flex items-center justify-center overflow-hidden">
+                          {food.image ? (
+                            <img src={food.image} alt={food.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <img src="/lovable-uploads/0a8a6a5b-8c67-43e2-8540-2330a7747ec9.png" alt="Food" className="w-6 h-6" />
+                          )}
+                        </div>
+                        <div>
+                          <div className="font-medium">{food.name}</div>
+                          <div className="flex gap-2 text-xs text-slate-500">
+                            <span>{food.calories} kcal</span>
+                            <span className="text-indigo-600">{food.protein}g P</span>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
-              <Button variant="ghost" size="icon" className="text-emerald-600">
-                <PlusCircle className="h-5 w-5" />
-              </Button>
-            </CardContent>
-          </Card>
+            ) : (
+              <Card className="shadow-sm">
+                <CardContent className="p-3 flex justify-between items-center">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-purple-100 p-2 rounded-lg">
+                      <img src="/lovable-uploads/0a8a6a5b-8c67-43e2-8540-2330a7747ec9.png" alt="Dinner" className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <div className="font-medium">Add dinner</div>
+                      <div className="text-xs text-slate-500">Recommended: 597 - 603 kcal</div>
+                    </div>
+                  </div>
+                  <Link to="/add-food?mealType=dinner">
+                    <Button variant="ghost" size="icon" className="text-emerald-600">
+                      <PlusCircle className="h-5 w-5" />
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+          
+          {/* Snacks Section */}
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <h3 className="text-md font-medium text-slate-700">Snacks</h3>
+              <Link to="/add-food?mealType=snack">
+                <Button variant="ghost" size="sm" className="text-emerald-600 h-auto py-1">
+                  <PlusCircle className="h-4 w-4 mr-1" />
+                  <span className="text-xs">Add</span>
+                </Button>
+              </Link>
+            </div>
+            
+            {snackFoods.length > 0 ? (
+              <div className="space-y-2">
+                {snackFoods.map(food => (
+                  <Card key={food.id} className="shadow-sm overflow-hidden">
+                    <CardContent className="p-3 flex justify-between items-center">
+                      <div className="flex items-center gap-3">
+                        <div className="bg-green-100 p-2 rounded-lg w-12 h-12 flex items-center justify-center overflow-hidden">
+                          {food.image ? (
+                            <img src={food.image} alt={food.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <img src="/lovable-uploads/0a8a6a5b-8c67-43e2-8540-2330a7747ec9.png" alt="Food" className="w-6 h-6" />
+                          )}
+                        </div>
+                        <div>
+                          <div className="font-medium">{food.name}</div>
+                          <div className="flex gap-2 text-xs text-slate-500">
+                            <span>{food.calories} kcal</span>
+                            <span className="text-indigo-600">{food.protein}g P</span>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <Card className="shadow-sm">
+                <CardContent className="p-3 flex justify-between items-center">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-green-100 p-2 rounded-lg">
+                      <img src="/lovable-uploads/0a8a6a5b-8c67-43e2-8540-2330a7747ec9.png" alt="Snack" className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <div className="font-medium">Add snack</div>
+                      <div className="text-xs text-slate-500">Recommended: 100 - 200 kcal</div>
+                    </div>
+                  </div>
+                  <Link to="/add-food?mealType=snack">
+                    <Button variant="ghost" size="icon" className="text-emerald-600">
+                      <PlusCircle className="h-5 w-5" />
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            )}
+          </div>
         </div>
       </div>
       
