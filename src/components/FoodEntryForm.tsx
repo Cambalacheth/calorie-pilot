@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,12 +26,10 @@ const FoodEntryForm: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [cameraActive, setCameraActive] = useState(false);
 
-  // Voice recognition function (simulated for now)
   const startVoiceRecognition = () => {
     setIsListening(true);
     setRecognizedText('');
     
-    // Simulate voice recognition
     toast.info('Escuchando... diga el nombre del alimento y los nutrientes.');
     
     setTimeout(() => {
@@ -40,7 +37,6 @@ const FoodEntryForm: React.FC = () => {
       setRecognizedText(simulatedRecognition);
       setIsListening(false);
       
-      // Auto-populate form fields based on recognized text
       setFoodName('Manzana');
       setCalories('100');
       setProtein('0.5');
@@ -50,8 +46,7 @@ const FoodEntryForm: React.FC = () => {
       toast.success('¡Audio reconocido con éxito!');
     }, 2000);
   };
-  
-  // Camera handling
+
   const toggleCamera = async () => {
     if (cameraActive) {
       if (videoRef.current && videoRef.current.srcObject) {
@@ -73,8 +68,7 @@ const FoodEntryForm: React.FC = () => {
       }
     }
   };
-  
-  // Capture image from camera
+
   const captureImage = () => {
     if (videoRef.current && canvasRef.current) {
       const video = videoRef.current;
@@ -86,28 +80,24 @@ const FoodEntryForm: React.FC = () => {
         canvas.height = video.videoHeight;
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
         
-        // Simulate AI processing
         processImage(canvas.toDataURL('image/png'));
       }
     }
   };
-  
-  // Handle file upload
+
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onload = (event) => {
         if (event.target?.result) {
-          // Simulate AI processing
           processImage(event.target.result as string);
         }
       };
       reader.readAsDataURL(file);
     }
   };
-  
-  // Simulate barcode scanning
+
   const scanBarcode = () => {
     setIsProcessing(true);
     toast.info('Escaneando código de barras...');
@@ -122,8 +112,7 @@ const FoodEntryForm: React.FC = () => {
       toast.success('¡Producto identificado con éxito!');
     }, 2000);
   };
-  
-  // Simulate AI image processing
+
   const processImage = (imageData: string) => {
     setIsProcessing(true);
     toast.info('Analizando imagen con IA...');
@@ -138,8 +127,7 @@ const FoodEntryForm: React.FC = () => {
       toast.success('¡Alimento identificado con éxito!');
     }, 3000);
   };
-  
-  // Reset form
+
   const resetForm = () => {
     setFoodName('');
     setCalories('');
@@ -148,8 +136,7 @@ const FoodEntryForm: React.FC = () => {
     setFat('');
     setRecognizedText('');
   };
-  
-  // Submit form
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -172,7 +159,7 @@ const FoodEntryForm: React.FC = () => {
     toast.success(`¡${foodName} añadido correctamente!`);
     resetForm();
   };
-  
+
   return (
     <Card className="glass-card animate-appear">
       <CardHeader>

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import Layout from '@/components/Layout';
 import NutritionSummaryCard from '@/components/NutritionSummaryCard';
@@ -7,7 +6,7 @@ import FoodEntryForm from '@/components/FoodEntryForm';
 import FoodList from '@/components/FoodList';
 import { useFood } from '@/context/FoodContext';
 import { Button } from '@/components/ui/button';
-import { Calendar, Camera, Edit3, FileBarChart, Microphone, Plus } from 'lucide-react';
+import { Calendar, Camera, Edit3, FileBarChart, Mic, Plus } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -63,7 +62,7 @@ const Dashboard = () => {
             <span>Subir foto</span>
           </Button>
           <Button className="h-auto py-4 flex flex-col items-center justify-center gap-2 shadow-sm" variant="secondary">
-            <Microphone className="h-5 w-5" />
+            <Mic className="h-5 w-5" />
             <span>Grabar voz</span>
           </Button>
           <Button className="h-auto py-4 flex flex-col items-center justify-center gap-2 shadow-sm" variant="secondary">
