@@ -3,7 +3,7 @@ import React from 'react';
 import { useFood, Food } from '@/context/FoodContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Trash2, Info, Edit } from 'lucide-react';
+import { Trash2, Info, Edit, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -18,9 +18,14 @@ interface FoodListProps {
 const FoodItem: React.FC<FoodItemProps> = ({ food }) => {
   const { removeFood } = useFood();
 
-  const handleDelete = () => {
-    removeFood(food.id);
-    toast.success(`Se ha eliminado ${food.name}`);
+  const handleDelete = async () => {
+    try {
+      await removeFood(food.id);
+      toast.success(`Se ha eliminado ${food.name}`);
+    } catch (error) {
+      console.error('Error deleting food:', error);
+      toast.error('No se pudo eliminar el alimento');
+    }
   };
 
   const formatTime = (date: Date) => {
@@ -71,7 +76,7 @@ const FoodItem: React.FC<FoodItemProps> = ({ food }) => {
 };
 
 const FoodList: React.FC<FoodListProps> = ({ mealTypeFilter }) => {
-  const { foods, clearFoods } = useFood();
+  const { foods, clearFoods, isLoading } = useFood();
   
   // Filter foods by today's date
   const todayFoods = foods.filter(
@@ -83,12 +88,28 @@ const FoodList: React.FC<FoodListProps> = ({ mealTypeFilter }) => {
     ? todayFoods.filter(food => food.mealType === mealTypeFilter) 
     : todayFoods;
 
-  const handleClearAll = () => {
+  const handleClearAll = async () => {
     if (window.confirm('¿Estás seguro de que quieres eliminar todos los alimentos?')) {
-      clearFoods();
-      toast.success('Se han eliminado todos los alimentos');
+      try {
+        await clearFoods();
+        toast.success('Se han eliminado todos los alimentos');
+      } catch (error) {
+        console.error('Error clearing foods:', error);
+        toast.error('No se pudieron eliminar los alimentos');
+      }
     }
   };
+
+  if (isLoading) {
+    return (
+      <Card className="glass-card flex flex-col items-center justify-center py-10 animate-appear">
+        <div className="text-center p-8">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-muted-foreground" />
+          <h3 className="text-lg font-medium mb-2">Cargando alimentos...</h3>
+        </div>
+      </Card>
+    );
+  }
 
   if (filteredFoods.length === 0) {
     return (

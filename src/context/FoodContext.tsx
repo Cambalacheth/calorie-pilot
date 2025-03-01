@@ -1,5 +1,7 @@
 
 import React, { createContext, useState, useContext, useEffect } from 'react';
+import { v4 as uuidv4 } from 'uuid';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface Food {
   id: string;
@@ -20,126 +22,249 @@ export interface FoodLog {
 
 interface FoodContextProps {
   foods: Food[];
-  addFood: (food: Food) => void;
-  removeFood: (id: string) => void;
+  addFood: (food: Food) => Promise<void>;
+  removeFood: (id: string) => Promise<void>;
   dailyLogs: Record<string, FoodLog>;
   dailyCalories: number;
   dailyProtein: number;
   dailyCarbs: number;
   dailyFat: number;
-  clearFoods: () => void;
+  clearFoods: () => Promise<void>;
   streak: number;
   activeDates: string[];
+  isLoading: boolean;
 }
 
 const FoodContext = createContext<FoodContextProps | undefined>(undefined);
 
 export const FoodProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [foods, setFoods] = useState<Food[]>([
-    // Sample data for testing UI
-    {
-      id: '1',
-      name: 'Ensalada de pollo',
-      calories: 350,
-      protein: 30,
-      carbs: 15,
-      fat: 12,
-      date: new Date(),
-      mealType: 'lunch',
-      image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=100&q=60'
-    },
-    {
-      id: '2',
-      name: 'Yogur con frutas',
-      calories: 180,
-      protein: 10,
-      carbs: 25,
-      fat: 5,
-      date: new Date(),
-      mealType: 'breakfast',
-      image: 'https://images.unsplash.com/photo-1583531352515-8884af319dc0?auto=format&fit=crop&w=100&q=60'
-    },
-    {
-      id: '3',
-      name: 'Pasta con salsa',
-      calories: 450,
-      protein: 15,
-      carbs: 65,
-      fat: 8,
-      date: new Date(),
-      mealType: 'dinner',
-      image: 'https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?auto=format&fit=crop&w=100&q=60'
-    }
-  ]);
+  const [foods, setFoods] = useState<Food[]>([]);
   const [dailyLogs, setDailyLogs] = useState<Record<string, FoodLog>>({});
-  const [streak, setStreak] = useState<number>(5); // Simulamos una racha de 5 días
-  const [activeDates, setActiveDates] = useState<string[]>([]); // Fechas con entradas registradas
+  const [streak, setStreak] = useState<number>(0);
+  const [activeDates, setActiveDates] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const formatDate = (date: Date): string => {
     return date.toISOString().split('T')[0];
   };
 
-  // Actualiza las fechas activas cuando cambian los alimentos
+  // Fetch foods from Supabase
   useEffect(() => {
-    const dates = foods.map(food => formatDate(food.date));
-    const uniqueDates = [...new Set(dates)].sort();
-    setActiveDates(uniqueDates);
-    
-    // Calculamos la racha basada en las fechas consecutivas
-    // En una app real, este cálculo sería más complejo
-    if (uniqueDates.length > 0) {
-      // Simulamos una racha basada en la cantidad de fechas únicas
-      // En una implementación real, verificaríamos fechas consecutivas
-      setStreak(Math.min(uniqueDates.length, 5)); 
-    } else {
+    const fetchFoods = async () => {
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('foods')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('Error fetching foods:', error);
+          return;
+        }
+
+        if (data) {
+          const formattedFoods: Food[] = data.map(item => ({
+            id: item.id,
+            name: item.name,
+            calories: item.calories,
+            protein: Number(item.protein),
+            carbs: Number(item.carbs),
+            fat: Number(item.fat),
+            date: new Date(item.date),
+            mealType: item.meal_type,
+            image: item.image_url
+          }));
+          setFoods(formattedFoods);
+          
+          // Process the daily logs
+          const logs: Record<string, FoodLog> = {};
+          formattedFoods.forEach(food => {
+            const dateStr = formatDate(food.date);
+            if (!logs[dateStr]) {
+              logs[dateStr] = { date: dateStr, entries: [] };
+            }
+            logs[dateStr].entries.push(food);
+          });
+          setDailyLogs(logs);
+          
+          // Calculate active dates and streak
+          const dates = formattedFoods.map(food => formatDate(food.date));
+          const uniqueDates = [...new Set(dates)].sort();
+          setActiveDates(uniqueDates);
+          
+          // Calculate streak (simplified for now)
+          calculateStreak(uniqueDates);
+        }
+      } catch (error) {
+        console.error('Error in fetch foods:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchFoods();
+  }, []);
+
+  // Calculate streak based on unique dates
+  const calculateStreak = (uniqueDates: string[]) => {
+    if (uniqueDates.length === 0) {
       setStreak(0);
+      return;
     }
-  }, [foods]);
-
-  const addFood = (food: Food) => {
-    setFoods(prevFoods => [...prevFoods, food]);
     
-    const dateStr = formatDate(food.date);
-    setDailyLogs(prevLogs => {
-      const existingLog = prevLogs[dateStr] || { date: dateStr, entries: [] };
-      return {
-        ...prevLogs,
-        [dateStr]: {
-          ...existingLog,
-          entries: [...existingLog.entries, food]
-        }
-      };
-    });
+    // For now, just use the count of unique dates as a simple streak
+    // In a real app, we'd check for consecutive days
+    setStreak(Math.min(uniqueDates.length, 5));
   };
 
-  const removeFood = (id: string) => {
-    const foodToRemove = foods.find(food => food.id === id);
-    if (!foodToRemove) return;
+  // Add food to Supabase
+  const addFood = async (food: Food) => {
+    try {
+      const { data, error } = await supabase
+        .from('foods')
+        .insert([{
+          id: food.id || uuidv4(),
+          name: food.name,
+          calories: food.calories,
+          protein: food.protein,
+          carbs: food.carbs,
+          fat: food.fat,
+          date: formatDate(food.date),
+          meal_type: food.mealType || 'snack',
+          image_url: food.image
+        }])
+        .select()
+        .single();
 
-    setFoods(prevFoods => prevFoods.filter(food => food.id !== id));
-    
-    const dateStr = formatDate(foodToRemove.date);
-    setDailyLogs(prevLogs => {
-      if (!prevLogs[dateStr]) return prevLogs;
+      if (error) {
+        console.error('Error adding food:', error);
+        return;
+      }
+
+      // Convert the returned data to our Food format
+      const newFood: Food = {
+        id: data.id,
+        name: data.name,
+        calories: data.calories,
+        protein: Number(data.protein),
+        carbs: Number(data.carbs),
+        fat: Number(data.fat),
+        date: new Date(data.date),
+        mealType: data.meal_type,
+        image: data.image_url
+      };
+
+      // Update state
+      setFoods(prevFoods => [newFood, ...prevFoods]);
       
-      return {
-        ...prevLogs,
-        [dateStr]: {
-          ...prevLogs[dateStr],
-          entries: prevLogs[dateStr].entries.filter(food => food.id !== id)
-        }
-      };
-    });
+      // Update daily logs
+      const dateStr = formatDate(newFood.date);
+      setDailyLogs(prevLogs => {
+        const existingLog = prevLogs[dateStr] || { date: dateStr, entries: [] };
+        return {
+          ...prevLogs,
+          [dateStr]: {
+            ...existingLog,
+            entries: [...existingLog.entries, newFood]
+          }
+        };
+      });
+      
+      // Update active dates and streak
+      const newDateStr = formatDate(newFood.date);
+      if (!activeDates.includes(newDateStr)) {
+        const newActiveDates = [...activeDates, newDateStr].sort();
+        setActiveDates(newActiveDates);
+        calculateStreak(newActiveDates);
+      }
+    } catch (error) {
+      console.error('Error in add food:', error);
+    }
   };
 
-  const clearFoods = () => {
-    setFoods([]);
-    setDailyLogs({});
+  // Remove food from Supabase
+  const removeFood = async (id: string) => {
+    try {
+      const foodToRemove = foods.find(food => food.id === id);
+      if (!foodToRemove) return;
+
+      const { error } = await supabase
+        .from('foods')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        console.error('Error removing food:', error);
+        return;
+      }
+
+      // Update state
+      setFoods(prevFoods => prevFoods.filter(food => food.id !== id));
+      
+      // Update daily logs
+      const dateStr = formatDate(foodToRemove.date);
+      setDailyLogs(prevLogs => {
+        if (!prevLogs[dateStr]) return prevLogs;
+        
+        const updatedEntries = prevLogs[dateStr].entries.filter(food => food.id !== id);
+        
+        if (updatedEntries.length === 0) {
+          const { [dateStr]: _, ...rest } = prevLogs;
+          return rest;
+        }
+        
+        return {
+          ...prevLogs,
+          [dateStr]: {
+            ...prevLogs[dateStr],
+            entries: updatedEntries
+          }
+        };
+      });
+      
+      // Check if we need to update active dates
+      const dateToCheck = formatDate(foodToRemove.date);
+      const foodsOnDate = foods.filter(
+        food => formatDate(food.date) === dateToCheck && food.id !== id
+      );
+      
+      if (foodsOnDate.length === 0) {
+        const newActiveDates = activeDates.filter(date => date !== dateToCheck);
+        setActiveDates(newActiveDates);
+        calculateStreak(newActiveDates);
+      }
+    } catch (error) {
+      console.error('Error in remove food:', error);
+    }
+  };
+
+  // Clear all foods from Supabase
+  const clearFoods = async () => {
+    try {
+      const { error } = await supabase
+        .from('foods')
+        .delete()
+        .gte('id', '0'); // This will delete all records
+
+      if (error) {
+        console.error('Error clearing foods:', error);
+        return;
+      }
+
+      // Update state
+      setFoods([]);
+      setDailyLogs({});
+      setActiveDates([]);
+      setStreak(0);
+    } catch (error) {
+      console.error('Error in clear foods:', error);
+    }
   };
 
   // Calculate daily totals
   const today = formatDate(new Date());
-  const todayEntries = dailyLogs[today]?.entries || foods.filter(food => formatDate(food.date) === today);
+  const todayEntries = dailyLogs[today]?.entries || [];
   
   const dailyCalories = todayEntries.reduce((sum, food) => sum + food.calories, 0);
   const dailyProtein = todayEntries.reduce((sum, food) => sum + food.protein, 0);
@@ -158,7 +283,8 @@ export const FoodProvider: React.FC<{ children: React.ReactNode }> = ({ children
       dailyFat,
       clearFoods,
       streak,
-      activeDates
+      activeDates,
+      isLoading
     }}>
       {children}
     </FoodContext.Provider>

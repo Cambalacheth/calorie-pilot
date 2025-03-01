@@ -9,7 +9,95 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      foods: {
+        Row: {
+          calories: number
+          carbs: number | null
+          created_at: string | null
+          date: string | null
+          fat: number | null
+          id: string
+          image_url: string | null
+          meal_type: string | null
+          name: string
+          protein: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          calories: number
+          carbs?: number | null
+          created_at?: string | null
+          date?: string | null
+          fat?: number | null
+          id?: string
+          image_url?: string | null
+          meal_type?: string | null
+          name: string
+          protein?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          calories?: number
+          carbs?: number | null
+          created_at?: string | null
+          date?: string | null
+          fat?: number | null
+          id?: string
+          image_url?: string | null
+          meal_type?: string | null
+          name?: string
+          protein?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "foods_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          calorie_goal: number | null
+          carbs_goal: number | null
+          created_at: string | null
+          fat_goal: number | null
+          id: string
+          name: string | null
+          protein_goal: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          calorie_goal?: number | null
+          carbs_goal?: number | null
+          created_at?: string | null
+          fat_goal?: number | null
+          id: string
+          name?: string | null
+          protein_goal?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          calorie_goal?: number | null
+          carbs_goal?: number | null
+          created_at?: string | null
+          fat_goal?: number | null
+          id?: string
+          name?: string | null
+          protein_goal?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
