@@ -11,6 +11,7 @@ import SettingsPage from "./pages/SettingsPage";
 import AnalysisPage from "./pages/AnalysisPage";
 import ProgressPage from "./pages/ProgressPage";
 import AddFoodPage from "./pages/AddFoodPage";
+import RecipesPage from "./pages/RecipesPage";
 import NotFound from "./pages/NotFound";
 import { FoodProvider } from "./context/FoodContext";
 import { AnimatePresence } from "./components/AnimatePresence";
@@ -33,6 +34,7 @@ const App = () => (
               <Route path="/analysis" element={<AnalysisPage />} />
               <Route path="/progress" element={<ProgressPage />} />
               <Route path="/add" element={<AddFoodPage />} />
+              <Route path="/recipes" element={<RecipesPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </AnimatePresence>

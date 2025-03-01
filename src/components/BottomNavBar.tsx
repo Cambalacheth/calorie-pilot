@@ -58,9 +58,9 @@ const BottomNavBar = () => {
         
         {/* Recipes */}
         <button 
-          onClick={() => navigate('/settings')}
+          onClick={() => navigate('/recipes')}
           className={`flex flex-col items-center justify-center w-1/5 h-full ${
-            isActive('/settings') ? 'text-[#FF7043]' : 'text-gray-600'
+            isActive('/recipes') ? 'text-[#FF7043]' : 'text-gray-600'
           }`}
         >
           <Utensils size={20} />
