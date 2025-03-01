@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import Layout from '@/components/Layout';
 import NutritionSummaryCard from '@/components/NutritionSummaryCard';
@@ -11,6 +12,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import DailyProgress from '@/components/DailyProgress';
+import { Link } from 'react-router-dom';
 
 const Dashboard = () => {
   const { dailyCalories, dailyProtein, dailyCarbs, dailyFat } = useFood();
@@ -69,10 +71,12 @@ const Dashboard = () => {
             <Edit3 className="h-5 w-5" />
             <span>Escribir manualmente</span>
           </Button>
-          <Button className="h-auto py-4 flex flex-col items-center justify-center gap-2 shadow-sm" variant="secondary">
-            <FileBarChart className="h-5 w-5" />
-            <span>Ver análisis</span>
-          </Button>
+          <Link to="/analysis" className="block">
+            <Button className="h-auto py-4 w-full flex flex-col items-center justify-center gap-2 shadow-sm" variant="secondary">
+              <FileBarChart className="h-5 w-5" />
+              <span>Ver análisis</span>
+            </Button>
+          </Link>
         </div>
 
         {/* Meal Type Filter */}

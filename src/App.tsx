@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import FoodDetail from "./pages/FoodDetail";
 import SettingsPage from "./pages/SettingsPage";
+import AnalysisPage from "./pages/AnalysisPage";
 import NotFound from "./pages/NotFound";
 import { FoodProvider } from "./context/FoodContext";
 import { AnimatePresence } from "./components/AnimatePresence";
@@ -27,6 +28,7 @@ const App = () => (
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/food/:id" element={<FoodDetail />} />
               <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/analysis" element={<AnalysisPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </AnimatePresence>
