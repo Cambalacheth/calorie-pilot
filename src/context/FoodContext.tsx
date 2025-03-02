@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { supabase } from '@/integrations/supabase/client';
@@ -13,6 +12,7 @@ export interface Food {
   date: Date;
   image?: string;
   mealType?: string; // breakfast, lunch, dinner, snack
+  userId?: string; // Add userId to the interface
 }
 
 export interface FoodLog {
@@ -48,13 +48,11 @@ export const FoodProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return date.toISOString().split('T')[0];
   };
 
-  // Fetch foods from Supabase
   useEffect(() => {
     const fetchFoods = async () => {
       setIsLoading(true);
       try {
         const { data: userData } = await supabase.auth.getUser();
-        // For now, use a default user ID if not authenticated
         const userId = userData?.user?.id || '00000000-0000-0000-0000-000000000000';
         
         const { data, error } = await supabase
@@ -77,11 +75,11 @@ export const FoodProvider: React.FC<{ children: React.ReactNode }> = ({ children
             fat: Number(item.fat),
             date: new Date(item.date),
             mealType: item.meal_type,
-            image: item.image_url
+            image: item.image_url,
+            userId: item.user_id
           }));
           setFoods(formattedFoods);
           
-          // Process the daily logs
           const logs: Record<string, FoodLog> = {};
           formattedFoods.forEach(food => {
             const dateStr = formatDate(food.date);
@@ -92,12 +90,10 @@ export const FoodProvider: React.FC<{ children: React.ReactNode }> = ({ children
           });
           setDailyLogs(logs);
           
-          // Calculate active dates and streak
           const dates = formattedFoods.map(food => formatDate(food.date));
           const uniqueDates = [...new Set(dates)].sort();
           setActiveDates(uniqueDates);
           
-          // Calculate streak (simplified for now)
           calculateStreak(uniqueDates);
         }
       } catch (error) {
@@ -110,23 +106,18 @@ export const FoodProvider: React.FC<{ children: React.ReactNode }> = ({ children
     fetchFoods();
   }, []);
 
-  // Calculate streak based on unique dates
   const calculateStreak = (uniqueDates: string[]) => {
     if (uniqueDates.length === 0) {
       setStreak(0);
       return;
     }
     
-    // For now, just use the count of unique dates as a simple streak
-    // In a real app, we'd check for consecutive days
     setStreak(Math.min(uniqueDates.length, 5));
   };
 
-  // Add food to Supabase
   const addFood = async (food: Food) => {
     try {
       const { data: userData } = await supabase.auth.getUser();
-      // For now, use a default user ID if not authenticated
       const userId = userData?.user?.id || '00000000-0000-0000-0000-000000000000';
       
       const { data, error } = await supabase
@@ -141,7 +132,7 @@ export const FoodProvider: React.FC<{ children: React.ReactNode }> = ({ children
           date: formatDate(food.date),
           meal_type: food.mealType || 'snack',
           image_url: food.image,
-          user_id: userId  // Add the user_id field
+          user_id: userId
         })
         .select()
         .single();
@@ -151,7 +142,6 @@ export const FoodProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
 
-      // Convert the returned data to our Food format
       const newFood: Food = {
         id: data.id,
         name: data.name,
@@ -161,13 +151,12 @@ export const FoodProvider: React.FC<{ children: React.ReactNode }> = ({ children
         fat: Number(data.fat),
         date: new Date(data.date),
         mealType: data.meal_type,
-        image: data.image_url
+        image: data.image_url,
+        userId: data.user_id
       };
 
-      // Update state
       setFoods(prevFoods => [newFood, ...prevFoods]);
       
-      // Update daily logs
       const dateStr = formatDate(newFood.date);
       setDailyLogs(prevLogs => {
         const existingLog = prevLogs[dateStr] || { date: dateStr, entries: [] };
@@ -180,7 +169,6 @@ export const FoodProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
       });
       
-      // Update active dates and streak
       const newDateStr = formatDate(newFood.date);
       if (!activeDates.includes(newDateStr)) {
         const newActiveDates = [...activeDates, newDateStr].sort();
@@ -192,7 +180,6 @@ export const FoodProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Remove food from Supabase
   const removeFood = async (id: string) => {
     try {
       const foodToRemove = foods.find(food => food.id === id);
@@ -208,10 +195,8 @@ export const FoodProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
 
-      // Update state
       setFoods(prevFoods => prevFoods.filter(food => food.id !== id));
       
-      // Update daily logs
       const dateStr = formatDate(foodToRemove.date);
       setDailyLogs(prevLogs => {
         if (!prevLogs[dateStr]) return prevLogs;
@@ -232,7 +217,6 @@ export const FoodProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
       });
       
-      // Check if we need to update active dates
       const dateToCheck = formatDate(foodToRemove.date);
       const foodsOnDate = foods.filter(
         food => formatDate(food.date) === dateToCheck && food.id !== id
@@ -248,20 +232,21 @@ export const FoodProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Clear all foods from Supabase
   const clearFoods = async () => {
     try {
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData?.user?.id || '00000000-0000-0000-0000-000000000000';
+      
       const { error } = await supabase
         .from('foods')
         .delete()
-        .gte('id', '0'); // This will delete all records
+        .eq('user_id', userId);
 
       if (error) {
         console.error('Error clearing foods:', error);
         return;
       }
 
-      // Update state
       setFoods([]);
       setDailyLogs({});
       setActiveDates([]);
@@ -271,7 +256,6 @@ export const FoodProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Calculate daily totals
   const today = formatDate(new Date());
   const todayEntries = dailyLogs[today]?.entries || [];
   
