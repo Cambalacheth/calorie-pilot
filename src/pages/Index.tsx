@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
+import UserMenu from '@/components/UserMenu';
 
 const Index = () => {
   const slogans = [
@@ -39,30 +40,38 @@ const Index = () => {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-background to-secondary/20">
-      <div className="container px-4 text-center max-w-3xl">
-        <div className="space-y-12">
-          <div className="inline-block rounded-lg bg-accent/10 px-3 py-1 text-sm text-accent-foreground">
-            Nutrición inteligente
-          </div>
-          
-          <h1 className="text-4xl md:text-6xl font-bold tracking-tighter animate-appear">
-            CaloriePilot
-          </h1>
-          
-          <div className="h-16">
-            <p className="text-xl text-muted-foreground animate-fade-in">
-              {slogans[currentSloganIndex]}
-            </p>
-          </div>
-          
-          <div className="flex justify-center mt-12">
-            <Link to="/dashboard" className="pulse-on-hover">
-              <Button className="w-full px-8 py-8 text-xl rounded-xl" size="lg">
-                Comenzar ahora
-                <ArrowRight className="ml-2 h-6 w-6" />
-              </Button>
-            </Link>
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-background to-secondary/20">
+      <header className="w-full py-4 px-6">
+        <div className="container mx-auto flex justify-end">
+          <UserMenu />
+        </div>
+      </header>
+      
+      <div className="flex-1 flex items-center justify-center">
+        <div className="container px-4 text-center max-w-3xl">
+          <div className="space-y-12">
+            <div className="inline-block rounded-lg bg-accent/10 px-3 py-1 text-sm text-accent-foreground">
+              Nutrición inteligente
+            </div>
+            
+            <h1 className="text-4xl md:text-6xl font-bold tracking-tighter animate-appear">
+              CaloriePilot
+            </h1>
+            
+            <div className="h-16">
+              <p className="text-xl text-muted-foreground animate-fade-in">
+                {slogans[currentSloganIndex]}
+              </p>
+            </div>
+            
+            <div className="flex justify-center mt-12">
+              <Link to="/dashboard" className="pulse-on-hover">
+                <Button className="w-full px-8 py-8 text-xl rounded-xl" size="lg">
+                  Comenzar ahora
+                  <ArrowRight className="ml-2 h-6 w-6" />
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </div>
