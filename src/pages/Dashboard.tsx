@@ -43,8 +43,8 @@ const Dashboard = () => {
     fatGoal: 65
   });
 
-  const formattedDate = format(selectedDate, "'Today,' MMMM d", { locale: es });
-  const displayDate = format(selectedDate, "EEEE, MMMM d");
+  const formattedDate = format(selectedDate, "'Hoy,' MMMM d", { locale: es });
+  const displayDate = format(selectedDate, "EEEE, MMMM d", { locale: es });
   
   const handlePreviousDay = () => {
     setSelectedDate(prev => subDays(prev, 1));
@@ -129,6 +129,10 @@ const Dashboard = () => {
   const dinnerFoods = getFoodsByMealType('dinner');
   const snackFoods = getFoodsByMealType('snack');
 
+  const handleAddFood = (mealType: string) => {
+    navigate(`/add-food?mealType=${mealType}`);
+  };
+
   return (
     <div className="min-h-screen bg-emerald-800 text-white flex flex-col">
       {/* Header */}
@@ -187,25 +191,25 @@ const Dashboard = () => {
           </svg>
           <div className="absolute text-center">
             <div className="text-4xl font-bold">{remainingCalories}</div>
-            <div className="text-sm opacity-80">KCAL LEFT</div>
+            <div className="text-sm opacity-80">KCAL RESTANTES</div>
           </div>
           
           {/* Moved outside the circle to prevent overlapping */}
           <div className="absolute -top-10 left-1/2 -translate-x-1/2 text-center text-xs bg-emerald-700/70 px-3 py-1 rounded-full">
             <div className="font-bold text-sm">0</div>
-            <div className="opacity-70">BURNED</div>
+            <div className="opacity-70">QUEMADAS</div>
           </div>
           
           <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 text-center text-xs bg-emerald-700/70 px-3 py-1 rounded-full">
             <div className="font-bold text-sm">{dailyCalories}</div>
-            <div className="opacity-70">EARNED</div>
+            <div className="opacity-70">CONSUMIDAS</div>
           </div>
         </div>
         
         {/* Macronutrients Display */}
         <div className="w-full mt-8 grid grid-cols-3 gap-4 text-center">
           <div>
-            <div className="uppercase text-xs opacity-70">Carbs</div>
+            <div className="uppercase text-xs opacity-70">Carbos</div>
             <div className="font-semibold">{dailyCarbs.toFixed(1)}g</div>
             <div className="h-1 bg-white/20 rounded mt-1">
               <div 
@@ -216,7 +220,7 @@ const Dashboard = () => {
           </div>
           
           <div>
-            <div className="uppercase text-xs opacity-70">Protein</div>
+            <div className="uppercase text-xs opacity-70">Proteína</div>
             <div className="font-semibold">{dailyProtein.toFixed(1)}g</div>
             <div className="h-1 bg-white/20 rounded mt-1">
               <div 
@@ -227,7 +231,7 @@ const Dashboard = () => {
           </div>
           
           <div>
-            <div className="uppercase text-xs opacity-70">Fat</div>
+            <div className="uppercase text-xs opacity-70">Grasa</div>
             <div className="font-semibold">{dailyFat.toFixed(1)}g</div>
             <div className="h-1 bg-white/20 rounded mt-1">
               <div 
@@ -262,13 +266,16 @@ const Dashboard = () => {
           {/* Breakfast Section */}
           <div className="space-y-2">
             <div className="flex justify-between items-center">
-              <h3 className="text-md font-medium text-slate-700">Breakfast</h3>
-              <Link to="/add-food?mealType=breakfast">
-                <Button variant="ghost" size="sm" className="text-emerald-600 h-auto py-1">
-                  <PlusCircle className="h-4 w-4 mr-1" />
-                  <span className="text-xs">Add</span>
-                </Button>
-              </Link>
+              <h3 className="text-md font-medium text-slate-700">Desayuno</h3>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-emerald-600 h-auto py-1"
+                onClick={() => handleAddFood('breakfast')}
+              >
+                <PlusCircle className="h-4 w-4 mr-1" />
+                <span className="text-xs">Añadir</span>
+              </Button>
             </div>
             
             {breakfastFoods.length > 0 ? (
@@ -304,15 +311,18 @@ const Dashboard = () => {
                       <img src="/lovable-uploads/0a8a6a5b-8c67-43e2-8540-2330a7747ec9.png" alt="Breakfast" className="w-6 h-6" />
                     </div>
                     <div>
-                      <div className="font-medium">Add breakfast</div>
-                      <div className="text-xs text-slate-500">Recommended: 640 - 675 kcal</div>
+                      <div className="font-medium">Añadir desayuno</div>
+                      <div className="text-xs text-slate-500">Recomendado: 640 - 675 kcal</div>
                     </div>
                   </div>
-                  <Link to="/add-food?mealType=breakfast">
-                    <Button variant="ghost" size="icon" className="text-emerald-600">
-                      <PlusCircle className="h-5 w-5" />
-                    </Button>
-                  </Link>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="text-emerald-600"
+                    onClick={() => handleAddFood('breakfast')}
+                  >
+                    <PlusCircle className="h-5 w-5" />
+                  </Button>
                 </CardContent>
               </Card>
             )}
@@ -321,13 +331,16 @@ const Dashboard = () => {
           {/* Lunch Section */}
           <div className="space-y-2">
             <div className="flex justify-between items-center">
-              <h3 className="text-md font-medium text-slate-700">Lunch</h3>
-              <Link to="/add-food?mealType=lunch">
-                <Button variant="ghost" size="sm" className="text-emerald-600 h-auto py-1">
-                  <PlusCircle className="h-4 w-4 mr-1" />
-                  <span className="text-xs">Add</span>
-                </Button>
-              </Link>
+              <h3 className="text-md font-medium text-slate-700">Almuerzo</h3>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-emerald-600 h-auto py-1"
+                onClick={() => handleAddFood('lunch')}
+              >
+                <PlusCircle className="h-4 w-4 mr-1" />
+                <span className="text-xs">Añadir</span>
+              </Button>
             </div>
             
             {lunchFoods.length > 0 ? (
@@ -363,15 +376,18 @@ const Dashboard = () => {
                       <img src="/lovable-uploads/0a8a6a5b-8c67-43e2-8540-2330a7747ec9.png" alt="Lunch" className="w-6 h-6" />
                     </div>
                     <div>
-                      <div className="font-medium">Add lunch</div>
-                      <div className="text-xs text-slate-500">Recommended: 697 - 703 kcal</div>
+                      <div className="font-medium">Añadir almuerzo</div>
+                      <div className="text-xs text-slate-500">Recomendado: 697 - 703 kcal</div>
                     </div>
                   </div>
-                  <Link to="/add-food?mealType=lunch">
-                    <Button variant="ghost" size="icon" className="text-emerald-600">
-                      <PlusCircle className="h-5 w-5" />
-                    </Button>
-                  </Link>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="text-emerald-600"
+                    onClick={() => handleAddFood('lunch')}
+                  >
+                    <PlusCircle className="h-5 w-5" />
+                  </Button>
                 </CardContent>
               </Card>
             )}
@@ -380,13 +396,16 @@ const Dashboard = () => {
           {/* Dinner Section */}
           <div className="space-y-2">
             <div className="flex justify-between items-center">
-              <h3 className="text-md font-medium text-slate-700">Dinner</h3>
-              <Link to="/add-food?mealType=dinner">
-                <Button variant="ghost" size="sm" className="text-emerald-600 h-auto py-1">
-                  <PlusCircle className="h-4 w-4 mr-1" />
-                  <span className="text-xs">Add</span>
-                </Button>
-              </Link>
+              <h3 className="text-md font-medium text-slate-700">Cena</h3>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-emerald-600 h-auto py-1"
+                onClick={() => handleAddFood('dinner')}
+              >
+                <PlusCircle className="h-4 w-4 mr-1" />
+                <span className="text-xs">Añadir</span>
+              </Button>
             </div>
             
             {dinnerFoods.length > 0 ? (
@@ -422,15 +441,18 @@ const Dashboard = () => {
                       <img src="/lovable-uploads/0a8a6a5b-8c67-43e2-8540-2330a7747ec9.png" alt="Dinner" className="w-6 h-6" />
                     </div>
                     <div>
-                      <div className="font-medium">Add dinner</div>
-                      <div className="text-xs text-slate-500">Recommended: 597 - 603 kcal</div>
+                      <div className="font-medium">Añadir cena</div>
+                      <div className="text-xs text-slate-500">Recomendado: 597 - 603 kcal</div>
                     </div>
                   </div>
-                  <Link to="/add-food?mealType=dinner">
-                    <Button variant="ghost" size="icon" className="text-emerald-600">
-                      <PlusCircle className="h-5 w-5" />
-                    </Button>
-                  </Link>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="text-emerald-600"
+                    onClick={() => handleAddFood('dinner')}
+                  >
+                    <PlusCircle className="h-5 w-5" />
+                  </Button>
                 </CardContent>
               </Card>
             )}
@@ -440,12 +462,15 @@ const Dashboard = () => {
           <div className="space-y-2">
             <div className="flex justify-between items-center">
               <h3 className="text-md font-medium text-slate-700">Snacks</h3>
-              <Link to="/add-food?mealType=snack">
-                <Button variant="ghost" size="sm" className="text-emerald-600 h-auto py-1">
-                  <PlusCircle className="h-4 w-4 mr-1" />
-                  <span className="text-xs">Add</span>
-                </Button>
-              </Link>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-emerald-600 h-auto py-1"
+                onClick={() => handleAddFood('snack')}
+              >
+                <PlusCircle className="h-4 w-4 mr-1" />
+                <span className="text-xs">Añadir</span>
+              </Button>
             </div>
             
             {snackFoods.length > 0 ? (
@@ -481,15 +506,18 @@ const Dashboard = () => {
                       <img src="/lovable-uploads/0a8a6a5b-8c67-43e2-8540-2330a7747ec9.png" alt="Snack" className="w-6 h-6" />
                     </div>
                     <div>
-                      <div className="font-medium">Add snack</div>
-                      <div className="text-xs text-slate-500">Recommended: 100 - 200 kcal</div>
+                      <div className="font-medium">Añadir snack</div>
+                      <div className="text-xs text-slate-500">Recomendado: 100 - 200 kcal</div>
                     </div>
                   </div>
-                  <Link to="/add-food?mealType=snack">
-                    <Button variant="ghost" size="icon" className="text-emerald-600">
-                      <PlusCircle className="h-5 w-5" />
-                    </Button>
-                  </Link>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="text-emerald-600"
+                    onClick={() => handleAddFood('snack')}
+                  >
+                    <PlusCircle className="h-5 w-5" />
+                  </Button>
                 </CardContent>
               </Card>
             )}
@@ -501,12 +529,12 @@ const Dashboard = () => {
       <div className="fixed bottom-0 left-0 right-0 bg-[#FFF8E1] text-[#212121] border-t shadow-lg flex justify-around items-center px-2 z-10">
         <Link to="/dashboard" className="flex flex-col items-center py-2 px-3 text-center">
           <NotebookPen className="h-6 w-6 text-[#FF7043]" />
-          <span className="text-xs mt-1 font-medium">Diary</span>
+          <span className="text-xs mt-1 font-medium">Diario</span>
         </Link>
         
         <Link to="/analysis" className="flex flex-col items-center py-2 px-3 text-center">
           <BarChart2 className="h-6 w-6" />
-          <span className="text-xs mt-1">Progress</span>
+          <span className="text-xs mt-1">Progreso</span>
         </Link>
         
         <div className="flex flex-col items-center -mt-5">
@@ -516,17 +544,17 @@ const Dashboard = () => {
           >
             <PlusCircle className="h-8 w-8 text-white" />
           </Link>
-          <span className="text-xs mt-1">Add</span>
+          <span className="text-xs mt-1">Añadir</span>
         </div>
         
         <Link to="/nutrient-analysis" className="flex flex-col items-center py-2 px-3 text-center">
           <Brain className="h-6 w-6" />
-          <span className="text-xs mt-1">Analysis</span>
+          <span className="text-xs mt-1">Análisis</span>
         </Link>
         
         <Link to="/recipes" className="flex flex-col items-center py-2 px-3 text-center">
           <BookOpenText className="h-6 w-6" />
-          <span className="text-xs mt-1">Recipes</span>
+          <span className="text-xs mt-1">Recetas</span>
         </Link>
       </div>
     </div>
