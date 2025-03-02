@@ -74,6 +74,10 @@ const SettingsPage = () => {
       if (error) throw error;
       
       toast.success('Objetivos nutricionales guardados correctamente');
+      
+      // Dispatch a custom event to notify other components that settings were updated
+      window.dispatchEvent(new Event('settings-updated'));
+      
     } catch (error) {
       console.error('Error saving nutrition goals:', error);
       toast.error('Error al guardar tus objetivos nutricionales');

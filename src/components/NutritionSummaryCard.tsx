@@ -14,6 +14,7 @@ interface NutritionSummaryCardProps {
   proteinGoal?: number;
   carbsGoal?: number;
   fatGoal?: number;
+  refreshTrigger?: number; // Add a prop to trigger re-fetching
 }
 
 const NutritionSummaryCard: React.FC<NutritionSummaryCardProps> = ({
@@ -24,7 +25,8 @@ const NutritionSummaryCard: React.FC<NutritionSummaryCardProps> = ({
   calorieGoal: propCalorieGoal,
   proteinGoal: propProteinGoal,
   carbsGoal: propCarbsGoal,
-  fatGoal: propFatGoal
+  fatGoal: propFatGoal,
+  refreshTrigger = 0
 }) => {
   const { user } = useAuth();
   const [calorieGoal, setCalorieGoal] = useState(propCalorieGoal || 2000);
@@ -32,14 +34,15 @@ const NutritionSummaryCard: React.FC<NutritionSummaryCardProps> = ({
   const [carbsGoal, setCarbsGoal] = useState(propCarbsGoal || 200);
   const [fatGoal, setFatGoal] = useState(propFatGoal || 65);
 
+  // Update from props when they change
   useEffect(() => {
-    // If props provided, use those values
     if (propCalorieGoal) setCalorieGoal(propCalorieGoal);
     if (propProteinGoal) setProteinGoal(propProteinGoal);
     if (propCarbsGoal) setCarbsGoal(propCarbsGoal);
     if (propFatGoal) setFatGoal(propFatGoal);
   }, [propCalorieGoal, propProteinGoal, propCarbsGoal, propFatGoal]);
 
+  // Fetch user goals from Supabase
   useEffect(() => {
     const fetchUserGoals = async () => {
       if (!user) return;
@@ -66,7 +69,7 @@ const NutritionSummaryCard: React.FC<NutritionSummaryCardProps> = ({
     };
     
     fetchUserGoals();
-  }, [user, propCalorieGoal, propProteinGoal, propCarbsGoal, propFatGoal]);
+  }, [user, propCalorieGoal, propProteinGoal, propCarbsGoal, propFatGoal, refreshTrigger]);
 
   const caloriePercentage = Math.min(Math.round((calories / calorieGoal) * 100), 100);
   const proteinPercentage = Math.min(Math.round((protein / proteinGoal) * 100), 100);

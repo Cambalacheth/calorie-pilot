@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import NutritionSummaryCard from '@/components/NutritionSummaryCard';
 import MacronutrientChart from '@/components/MacronutrientChart';
@@ -24,12 +24,24 @@ import { format, subDays, addDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import DailyProgress from '@/components/DailyProgress';
 import { Card, CardContent } from '@/components/ui/card';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+import { useAuth } from '@/context/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 const Dashboard = () => {
   const { foods, dailyCalories, dailyProtein, dailyCarbs, dailyFat } = useFood();
   const [selectedMealType, setSelectedMealType] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [settingsUpdated, setSettingsUpdated] = useState(0);
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [userGoals, setUserGoals] = useState({
+    calorieGoal: 2000,
+    proteinGoal: 150,
+    carbsGoal: 200,
+    fatGoal: 65
+  });
 
   const formattedDate = format(selectedDate, "'Today,' MMMM d", { locale: es });
   const displayDate = format(selectedDate, "EEEE, MMMM d");
@@ -46,7 +58,62 @@ const Dashboard = () => {
     setSelectedMealType(prevType => prevType === type ? null : type);
   };
 
-  const calorieGoal = 2000;
+  // Fetch user goals from Supabase
+  useEffect(() => {
+    const fetchUserGoals = async () => {
+      if (!user) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('calorie_goal, protein_goal, carbs_goal, fat_goal')
+          .eq('id', user.id)
+          .single();
+        
+        if (error) throw error;
+        
+        if (data) {
+          setUserGoals({
+            calorieGoal: data.calorie_goal || 2000,
+            proteinGoal: data.protein_goal || 150,
+            carbsGoal: data.carbs_goal || 200,
+            fatGoal: data.fat_goal || 65
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching profile goals:', error);
+      }
+    };
+    
+    fetchUserGoals();
+  }, [user, settingsUpdated]);
+
+  // Function to handle settings button click
+  const handleSettingsClick = () => {
+    navigate('/settings');
+  };
+
+  // Function to handle notifications button click
+  const handleNotificationsClick = () => {
+    toast.info('Notificaciones próximamente', {
+      description: 'La función de notificaciones estará disponible pronto.'
+    });
+  };
+  
+  // Listen for settings changes via custom event
+  useEffect(() => {
+    const handleSettingsChange = () => {
+      setSettingsUpdated(prev => prev + 1);
+    };
+    
+    window.addEventListener('settings-updated', handleSettingsChange);
+    
+    return () => {
+      window.removeEventListener('settings-updated', handleSettingsChange);
+    };
+  }, []);
+
+  const calorieGoal = userGoals.calorieGoal;
   const remainingCalories = Math.max(calorieGoal - dailyCalories, 0);
   
   // Filter foods by meal type
@@ -71,10 +138,20 @@ const Dashboard = () => {
           <span className="ml-2 bg-emerald-700/50 text-white px-1.5 py-0.5 rounded-md text-xs font-medium">AI</span>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" className="text-white hover:bg-emerald-700">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="text-white hover:bg-emerald-700"
+            onClick={handleSettingsClick}
+          >
             <Settings className="h-5 w-5" />
           </Button>
-          <Button variant="ghost" size="icon" className="text-white hover:bg-emerald-700">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="text-white hover:bg-emerald-700"
+            onClick={handleNotificationsClick}
+          >
             <Bell className="h-5 w-5" />
           </Button>
         </div>
@@ -133,7 +210,7 @@ const Dashboard = () => {
             <div className="h-1 bg-white/20 rounded mt-1">
               <div 
                 className="h-full bg-white rounded" 
-                style={{ width: `${Math.min((dailyCarbs / 200) * 100, 100)}%` }}
+                style={{ width: `${Math.min((dailyCarbs / userGoals.carbsGoal) * 100, 100)}%` }}
               ></div>
             </div>
           </div>
@@ -144,7 +221,7 @@ const Dashboard = () => {
             <div className="h-1 bg-white/20 rounded mt-1">
               <div 
                 className="h-full bg-white rounded" 
-                style={{ width: `${Math.min((dailyProtein / 150) * 100, 100)}%` }}
+                style={{ width: `${Math.min((dailyProtein / userGoals.proteinGoal) * 100, 100)}%` }}
               ></div>
             </div>
           </div>
@@ -155,7 +232,7 @@ const Dashboard = () => {
             <div className="h-1 bg-white/20 rounded mt-1">
               <div 
                 className="h-full bg-white rounded" 
-                style={{ width: `${Math.min((dailyFat / 65) * 100, 100)}%` }}
+                style={{ width: `${Math.min((dailyFat / userGoals.fatGoal) * 100, 100)}%` }}
               ></div>
             </div>
           </div>
