@@ -7,7 +7,7 @@ import FoodList from '@/components/FoodList';
 import { useFood } from '@/context/FoodContext';
 import { Button } from '@/components/ui/button';
 import { 
-  Calendar, 
+  Calendar as CalendarIcon, 
   Camera, 
   Settings, 
   Bell, 
@@ -18,9 +18,10 @@ import {
   Brain,
   BookOpenText,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  X
 } from 'lucide-react';
-import { format, subDays, addDays } from 'date-fns';
+import { format, subDays, addDays, startOfMonth, endOfMonth, startOfWeek, endOfWeek, isSameMonth, isSameDay, addMonths, subMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
 import DailyProgress from '@/components/DailyProgress';
 import { Card, CardContent } from '@/components/ui/card';
@@ -34,6 +35,8 @@ const Dashboard = () => {
   const [selectedMealType, setSelectedMealType] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [settingsUpdated, setSettingsUpdated] = useState(0);
+  const [calendarExpanded, setCalendarExpanded] = useState(false);
+  const [currentMonth, setCurrentMonth] = useState(new Date());
   const navigate = useNavigate();
   const { user } = useAuth();
   const [userGoals, setUserGoals] = useState({
@@ -131,6 +134,98 @@ const Dashboard = () => {
 
   const handleAddFood = (mealType: string) => {
     navigate(`/add-food?mealType=${mealType}`);
+  };
+
+  // Calendar functions
+  const handleToggleCalendar = () => {
+    setCalendarExpanded(!calendarExpanded);
+  };
+
+  const handlePrevMonth = () => {
+    setCurrentMonth(subMonths(currentMonth, 1));
+  };
+
+  const handleNextMonth = () => {
+    setCurrentMonth(addMonths(currentMonth, 1));
+  };
+
+  const renderCalendarHeader = () => {
+    return (
+      <div className="flex justify-between items-center mb-4">
+        <Button variant="ghost" size="sm" onClick={handlePrevMonth} className="text-emerald-600">
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium">
+            {format(currentMonth, 'MMMM yyyy', { locale: es })}
+          </span>
+        </div>
+        
+        <Button variant="ghost" size="sm" onClick={handleNextMonth} className="text-emerald-600">
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
+    );
+  };
+
+  const renderCalendarDays = () => {
+    const days = [];
+    const dayLabels = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+    
+    for (let i = 0; i < 7; i++) {
+      days.push(
+        <div key={`header-${i}`} className="text-center text-xs font-medium text-gray-500 w-10">
+          {dayLabels[i]}
+        </div>
+      );
+    }
+    
+    return <div className="grid grid-cols-7 gap-1 mb-2">{days}</div>;
+  };
+
+  const renderCalendarDates = () => {
+    const monthStart = startOfMonth(currentMonth);
+    const monthEnd = endOfMonth(monthStart);
+    const startDate = startOfWeek(monthStart);
+    const endDate = endOfWeek(monthEnd);
+    
+    const rows = [];
+    let days = [];
+    let day = startDate;
+    
+    while (day <= endDate) {
+      for (let i = 0; i < 7; i++) {
+        const currentDay = day;
+        days.push(
+          <div
+            key={day.toString()}
+            className={`text-center p-1 relative cursor-pointer w-10 h-10 flex items-center justify-center rounded-full
+              ${isSameMonth(day, monthStart) ? 'text-gray-900' : 'text-gray-400'}
+              ${isSameDay(day, selectedDate) ? 'bg-emerald-600 text-white' : ''}
+              ${!isSameDay(day, selectedDate) && isSameMonth(day, monthStart) ? 'hover:bg-emerald-100' : ''}
+            `}
+            onClick={() => {
+              setSelectedDate(currentDay);
+              if (calendarExpanded) {
+                setCalendarExpanded(false);
+              }
+            }}
+          >
+            {format(day, 'd')}
+          </div>
+        );
+        day = addDays(day, 1);
+      }
+      rows.push(
+        <div key={day.toString()} className="grid grid-cols-7 gap-1">
+          {days}
+        </div>
+      );
+      days = [];
+    }
+    
+    return <div className="space-y-1">{rows}</div>;
   };
 
   return (
@@ -251,9 +346,13 @@ const Dashboard = () => {
             <ChevronLeft className="h-4 w-4" />
           </Button>
           
-          <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-emerald-600" />
+          <div 
+            className="flex items-center gap-2 cursor-pointer"
+            onClick={handleToggleCalendar}
+          >
+            <CalendarIcon className="h-4 w-4 text-emerald-600" />
             <span className="text-sm font-medium">{displayDate}</span>
+            <ChevronDown className={`h-3 w-3 text-emerald-600 transition-transform ${calendarExpanded ? 'rotate-180' : ''}`} />
           </div>
           
           <Button variant="ghost" size="sm" onClick={handleNextDay} className="text-emerald-600">
@@ -261,21 +360,32 @@ const Dashboard = () => {
           </Button>
         </div>
         
+        {/* Expanded Calendar */}
+        {calendarExpanded && (
+          <div className="mb-6 bg-white rounded-lg shadow-lg p-4 animate-in fade-in-0 zoom-in-95 duration-200">
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="font-medium">Calendario</h3>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-6 w-6"
+                onClick={() => setCalendarExpanded(false)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            {renderCalendarHeader()}
+            {renderCalendarDays()}
+            {renderCalendarDates()}
+          </div>
+        )}
+        
         {/* Meal Sections */}
         <div className="space-y-4">
           {/* Breakfast Section */}
           <div className="space-y-2">
             <div className="flex justify-between items-center">
               <h3 className="text-md font-medium text-slate-700">Desayuno</h3>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="text-emerald-600 h-auto py-1"
-                onClick={() => handleAddFood('breakfast')}
-              >
-                <PlusCircle className="h-4 w-4 mr-1" />
-                <span className="text-xs">Añadir</span>
-              </Button>
             </div>
             
             {breakfastFoods.length > 0 ? (
@@ -304,7 +414,10 @@ const Dashboard = () => {
                 ))}
               </div>
             ) : (
-              <Card className="shadow-sm">
+              <Card 
+                className="shadow-sm cursor-pointer hover:bg-slate-50 transition-colors"
+                onClick={() => handleAddFood('breakfast')}
+              >
                 <CardContent className="p-3 flex justify-between items-center">
                   <div className="flex items-center gap-3">
                     <div className="bg-blue-100 p-2 rounded-lg">
@@ -315,14 +428,7 @@ const Dashboard = () => {
                       <div className="text-xs text-slate-500">Recomendado: 640 - 675 kcal</div>
                     </div>
                   </div>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="text-emerald-600"
-                    onClick={() => handleAddFood('breakfast')}
-                  >
-                    <PlusCircle className="h-5 w-5" />
-                  </Button>
+                  <PlusCircle className="h-5 w-5 text-emerald-600" />
                 </CardContent>
               </Card>
             )}
@@ -332,15 +438,6 @@ const Dashboard = () => {
           <div className="space-y-2">
             <div className="flex justify-between items-center">
               <h3 className="text-md font-medium text-slate-700">Almuerzo</h3>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="text-emerald-600 h-auto py-1"
-                onClick={() => handleAddFood('lunch')}
-              >
-                <PlusCircle className="h-4 w-4 mr-1" />
-                <span className="text-xs">Añadir</span>
-              </Button>
             </div>
             
             {lunchFoods.length > 0 ? (
@@ -369,7 +466,10 @@ const Dashboard = () => {
                 ))}
               </div>
             ) : (
-              <Card className="shadow-sm">
+              <Card 
+                className="shadow-sm cursor-pointer hover:bg-slate-50 transition-colors"
+                onClick={() => handleAddFood('lunch')}
+              >
                 <CardContent className="p-3 flex justify-between items-center">
                   <div className="flex items-center gap-3">
                     <div className="bg-orange-100 p-2 rounded-lg">
@@ -380,14 +480,7 @@ const Dashboard = () => {
                       <div className="text-xs text-slate-500">Recomendado: 697 - 703 kcal</div>
                     </div>
                   </div>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="text-emerald-600"
-                    onClick={() => handleAddFood('lunch')}
-                  >
-                    <PlusCircle className="h-5 w-5" />
-                  </Button>
+                  <PlusCircle className="h-5 w-5 text-emerald-600" />
                 </CardContent>
               </Card>
             )}
@@ -397,15 +490,6 @@ const Dashboard = () => {
           <div className="space-y-2">
             <div className="flex justify-between items-center">
               <h3 className="text-md font-medium text-slate-700">Cena</h3>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="text-emerald-600 h-auto py-1"
-                onClick={() => handleAddFood('dinner')}
-              >
-                <PlusCircle className="h-4 w-4 mr-1" />
-                <span className="text-xs">Añadir</span>
-              </Button>
             </div>
             
             {dinnerFoods.length > 0 ? (
@@ -434,7 +518,10 @@ const Dashboard = () => {
                 ))}
               </div>
             ) : (
-              <Card className="shadow-sm">
+              <Card 
+                className="shadow-sm cursor-pointer hover:bg-slate-50 transition-colors"
+                onClick={() => handleAddFood('dinner')}
+              >
                 <CardContent className="p-3 flex justify-between items-center">
                   <div className="flex items-center gap-3">
                     <div className="bg-purple-100 p-2 rounded-lg">
@@ -445,14 +532,7 @@ const Dashboard = () => {
                       <div className="text-xs text-slate-500">Recomendado: 597 - 603 kcal</div>
                     </div>
                   </div>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="text-emerald-600"
-                    onClick={() => handleAddFood('dinner')}
-                  >
-                    <PlusCircle className="h-5 w-5" />
-                  </Button>
+                  <PlusCircle className="h-5 w-5 text-emerald-600" />
                 </CardContent>
               </Card>
             )}
@@ -462,15 +542,6 @@ const Dashboard = () => {
           <div className="space-y-2">
             <div className="flex justify-between items-center">
               <h3 className="text-md font-medium text-slate-700">Snacks</h3>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="text-emerald-600 h-auto py-1"
-                onClick={() => handleAddFood('snack')}
-              >
-                <PlusCircle className="h-4 w-4 mr-1" />
-                <span className="text-xs">Añadir</span>
-              </Button>
             </div>
             
             {snackFoods.length > 0 ? (
@@ -499,7 +570,10 @@ const Dashboard = () => {
                 ))}
               </div>
             ) : (
-              <Card className="shadow-sm">
+              <Card 
+                className="shadow-sm cursor-pointer hover:bg-slate-50 transition-colors"
+                onClick={() => handleAddFood('snack')}
+              >
                 <CardContent className="p-3 flex justify-between items-center">
                   <div className="flex items-center gap-3">
                     <div className="bg-green-100 p-2 rounded-lg">
@@ -510,14 +584,7 @@ const Dashboard = () => {
                       <div className="text-xs text-slate-500">Recomendado: 100 - 200 kcal</div>
                     </div>
                   </div>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="text-emerald-600"
-                    onClick={() => handleAddFood('snack')}
-                  >
-                    <PlusCircle className="h-5 w-5" />
-                  </Button>
+                  <PlusCircle className="h-5 w-5 text-emerald-600" />
                 </CardContent>
               </Card>
             )}
