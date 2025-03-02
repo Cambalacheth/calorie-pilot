@@ -1,7 +1,9 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { useAuth } from '@/context/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 interface NutritionSummaryCardProps {
   calories: number;
@@ -19,11 +21,53 @@ const NutritionSummaryCard: React.FC<NutritionSummaryCardProps> = ({
   protein,
   carbs,
   fat,
-  calorieGoal = 2000,
-  proteinGoal = 150,
-  carbsGoal = 200,
-  fatGoal = 65
+  calorieGoal: propCalorieGoal,
+  proteinGoal: propProteinGoal,
+  carbsGoal: propCarbsGoal,
+  fatGoal: propFatGoal
 }) => {
+  const { user } = useAuth();
+  const [calorieGoal, setCalorieGoal] = useState(propCalorieGoal || 2000);
+  const [proteinGoal, setProteinGoal] = useState(propProteinGoal || 150);
+  const [carbsGoal, setCarbsGoal] = useState(propCarbsGoal || 200);
+  const [fatGoal, setFatGoal] = useState(propFatGoal || 65);
+
+  useEffect(() => {
+    // If props provided, use those values
+    if (propCalorieGoal) setCalorieGoal(propCalorieGoal);
+    if (propProteinGoal) setProteinGoal(propProteinGoal);
+    if (propCarbsGoal) setCarbsGoal(propCarbsGoal);
+    if (propFatGoal) setFatGoal(propFatGoal);
+  }, [propCalorieGoal, propProteinGoal, propCarbsGoal, propFatGoal]);
+
+  useEffect(() => {
+    const fetchUserGoals = async () => {
+      if (!user) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('calorie_goal, protein_goal, carbs_goal, fat_goal')
+          .eq('id', user.id)
+          .single();
+        
+        if (error) throw error;
+        
+        if (data) {
+          // Only update state if props aren't provided
+          if (!propCalorieGoal && data.calorie_goal) setCalorieGoal(data.calorie_goal);
+          if (!propProteinGoal && data.protein_goal) setProteinGoal(data.protein_goal);
+          if (!propCarbsGoal && data.carbs_goal) setCarbsGoal(data.carbs_goal);
+          if (!propFatGoal && data.fat_goal) setFatGoal(data.fat_goal);
+        }
+      } catch (error) {
+        console.error('Error fetching profile goals:', error);
+      }
+    };
+    
+    fetchUserGoals();
+  }, [user, propCalorieGoal, propProteinGoal, propCarbsGoal, propFatGoal]);
+
   const caloriePercentage = Math.min(Math.round((calories / calorieGoal) * 100), 100);
   const proteinPercentage = Math.min(Math.round((protein / proteinGoal) * 100), 100);
   const carbsPercentage = Math.min(Math.round((carbs / carbsGoal) * 100), 100);
