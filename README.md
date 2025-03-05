@@ -1,69 +1,87 @@
-# Welcome to your Lovable project
 
-## Project info
+# CaloriePilot - Tu asistente nutricional impulsado por IA
 
-**URL**: https://lovable.dev/projects/fdc40c88-da54-48c0-88e6-7d8c168a48c9
+CaloriePilot es una aplicación web para registrar y analizar tu ingesta diaria de alimentos, monitorear macronutrientes, y recibir recomendaciones personalizadas para mejorar tus hábitos alimenticios.
 
-## How can I edit this code?
+## Características actuales
 
-There are several ways of editing your application.
+### Diario de alimentos
+- **Panel principal**: Visualización de calorías restantes en un círculo central con detalles de macronutrientes
+- **Registro por comidas**: Registro de alimentos en categorías (Desayuno, Almuerzo, Cena, Snacks)
+- **Calendario expandible**: Selección rápida de fechas para ver y agregar registros en días específicos
+- **Visualización simplificada**: Resumen claro de calorías y macronutrientes por cada alimento
+- **Navegación intuitiva**: Interfaz limpia con acceso rápido a todas las funciones principales
 
-**Use Lovable**
+### Registro de alimentos
+- **Formulario detallado**: Ingreso de nombre, imagen, calorías y macronutrientes
+- **Categorización por comidas**: Asignación de alimentos a momentos específicos del día
+- **Persistencia de datos**: Almacenamiento seguro de todos los registros
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/fdc40c88-da54-48c0-88e6-7d8c168a48c9) and start prompting.
+### Progreso y análisis
+- **Visualización de tendencias**: Gráficos de consumo de calorías y macronutrientes a lo largo del tiempo
+- **Análisis nutricional**: Evaluación básica de la calidad de la dieta según los alimentos registrados
+- **Seguimiento de objetivos**: Comparación del consumo real contra objetivos personalizados
 
-Changes made via Lovable will be committed automatically to this repo.
+### Recetas
+- **Biblioteca de recetas**: Colección de recetas organizadas por categorías
+- **Información nutricional**: Detalles de calorías y macronutrientes por receta
+- **Filtrado por tipo**: Opciones para filtrar recetas por categorías (saludables, tradicionales, etc.)
 
-**Use your preferred IDE**
+### Configuración personalizada
+- **Metas nutricionales**: Configuración de objetivos diarios de calorías y macronutrientes
+- **Perfil de usuario**: Gestión de información personal y preferencias
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## Arquitectura técnica
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+El proyecto está construido con tecnologías modernas:
 
-Follow these steps:
+- **Frontend**: React + TypeScript + Vite
+- **Estilos**: Tailwind CSS + shadcn/ui (componentes accesibles)
+- **Estado**: React Context + TanStack Query
+- **Enrutamiento**: React Router
+- **Almacenamiento**: Supabase (base de datos y autenticación)
+- **Animaciones**: Transition animations para una experiencia fluida
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+## Roadmap: Funcionalidades futuras
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+### Corto plazo (1-2 meses)
+- **Reconocimiento de alimentos con IA**: Identificación automática de alimentos mediante fotos
+- **Planificador de comidas semanal**: Herramienta para organizar y planificar todas las comidas de la semana
+- **Recordatorios personalizados**: Alertas configurables para registrar comidas o seguir hábitos
+- **Mejoras en visualización de progreso**: Gráficos avanzados y estadísticas detalladas
 
-# Step 3: Install the necessary dependencies.
-npm i
+### Mediano plazo (3-6 meses)
+- **Integración con dispositivos wearables**: Sincronización con relojes inteligentes y otros dispositivos
+- **Función de escáner de códigos de barras**: Registro rápido de alimentos comerciales
+- **Función social y comunidad**: Compartir logros, recetas y motivación con otros usuarios
+- **Generación de recetas personalizadas**: Recomendaciones basadas en preferencias y objetivos
+- **Funcionalidad offline**: Uso completo de la aplicación sin conexión a internet
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+### Largo plazo (6+ meses)
+- **Integración con servicios de delivery**: Pedidos de ingredientes o comidas preparadas
+- **Coach nutricional con IA**: Recomendaciones avanzadas personalizadas
+- **Plan de ejercicios complementario**: Rutinas de ejercicio que se adaptan a los objetivos nutricionales
+- **Versiones móviles nativas**: Aplicaciones específicas para iOS y Android
+- **Integración con profesionales**: Conexión con nutricionistas y entrenadores reales
 
-**Edit a file directly in GitHub**
+## Convenciones de desarrollo
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Para contribuir al proyecto, sigue estas convenciones:
 
-**Use GitHub Codespaces**
+- **Componentes**: Crear componentes pequeños y reutilizables
+- **Estado**: Usar React Context para estado global, y hooks para lógica reutilizable
+- **Estilos**: Utilizar clases de Tailwind y componentes de shadcn/ui
+- **Código limpio**: Mantener archivos enfocados y evitar componentes muy grandes
+- **Pruebas**: Añadir pruebas para nuevas funcionalidades (pendiente de implementar)
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Cómo contribuir
 
-## What technologies are used for this project?
+1. Clona el repositorio
+2. Instala las dependencias con `npm install`
+3. Inicia el servidor de desarrollo con `npm run dev`
+4. Realiza tus cambios siguiendo las convenciones
+5. Abre un Pull Request describiendo los cambios realizados
 
-This project is built with .
+---
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/fdc40c88-da54-48c0-88e6-7d8c168a48c9) and click on Share -> Publish.
-
-## I want to use a custom domain - is that possible?
-
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+© 2023 CaloriePilot. Todos los derechos reservados.
