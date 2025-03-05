@@ -2,12 +2,9 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CalendarIcon, Plus, Utensils, Coffee, Apple } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Card } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { es } from 'date-fns/locale';
 import DailyProgress from "@/components/DailyProgress";
@@ -19,6 +16,7 @@ import FoodList from "@/components/FoodList";
 import { useFood } from "@/context/FoodContext";
 import StreakCounter from "@/components/StreakCounter";
 import FoodSearch from '@/components/FoodSearch';
+import QuickScanButton from '@/components/QuickScanButton';
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from 'sonner';
 
@@ -48,6 +46,10 @@ const Dashboard = () => {
     
     addFood(newFood);
     toast.success(`${selectedFood.name} añadido a ${selectedDateFormatted}`);
+  };
+
+  const handleQuickScan = (barcode: string) => {
+    navigate(`/add?barcode=${barcode}`);
   };
 
   return (
@@ -87,7 +89,6 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Búsqueda rápida para agregar alimentos */}
         <div className="mb-6">
           <FoodSearch 
             onFoodSelect={handleQuickAddFood} 
@@ -95,16 +96,14 @@ const Dashboard = () => {
           />
         </div>
         
-        {/* Progreso Diario */}
         <DailyProgress
-          dailyCalories={dailyCalories}
-          dailyProtein={dailyProtein}
-          dailyCarbs={dailyCarbs}
-          dailyFat={dailyFat}
+          calories={dailyCalories}
+          protein={dailyProtein}
+          carbs={dailyCarbs}
+          fat={dailyFat}
           date={date}
         />
 
-        {/* Macronutrientes */}
         <div className="my-6">
           <MacronutrientChart
             protein={dailyProtein}
@@ -113,13 +112,11 @@ const Dashboard = () => {
           />
         </div>
 
-        {/* Comidas del día */}
         <div className="space-y-4">
-          {/* Desayuno */}
           <MealSection
             title="Desayuno"
             icon={<Coffee className="h-5 w-5" />}
-            foodEntries={breakfastEntries}
+            foods={breakfastEntries}
             onAddClick={() => {
               navigate('/add', { state: { mealType: 'breakfast', date } });
             }}
@@ -127,11 +124,10 @@ const Dashboard = () => {
             mealType="breakfast"
           />
           
-          {/* Almuerzo */}
           <MealSection
             title="Almuerzo"
             icon={<Utensils className="h-5 w-5" />}
-            foodEntries={lunchEntries}
+            foods={lunchEntries}
             onAddClick={() => {
               navigate('/add', { state: { mealType: 'lunch', date } });
             }}
@@ -139,11 +135,10 @@ const Dashboard = () => {
             mealType="lunch"
           />
           
-          {/* Cena */}
           <MealSection
             title="Cena"
             icon={<Utensils className="h-5 w-5" />}
-            foodEntries={dinnerEntries}
+            foods={dinnerEntries}
             onAddClick={() => {
               navigate('/add', { state: { mealType: 'dinner', date } });
             }}
@@ -151,11 +146,10 @@ const Dashboard = () => {
             mealType="dinner"
           />
           
-          {/* Snacks */}
           <MealSection
             title="Snacks"
             icon={<Apple className="h-5 w-5" />}
-            foodEntries={snackEntries}
+            foods={snackEntries}
             onAddClick={() => {
               navigate('/add', { state: { mealType: 'snack', date } });
             }}
@@ -164,21 +158,28 @@ const Dashboard = () => {
           />
         </div>
         
-        {/* Análisis de tiempo de comidas (más detallado) */}
         <div className="mt-6">
-          <MealTimeAnalysis />
+          <MealTimeAnalysis
+            mealData={{
+              breakfast: breakfastEntries,
+              lunch: lunchEntries,
+              dinner: dinnerEntries,
+              snack: snackEntries
+            }}
+          />
         </div>
+        
+        <QuickScanButton onScan={handleQuickScan} />
       </div>
       <BottomNavBar />
     </Layout>
   );
 };
 
-// MealSection Component
 interface MealSectionProps {
   title: string;
   icon: React.ReactNode;
-  foodEntries: any[];
+  foods: any[];
   onAddClick: () => void;
   date: Date;
   mealType: string;
@@ -187,7 +188,7 @@ interface MealSectionProps {
 const MealSection: React.FC<MealSectionProps> = ({
   title,
   icon,
-  foodEntries,
+  foods,
   onAddClick,
   date,
   mealType,
@@ -205,7 +206,11 @@ const MealSection: React.FC<MealSectionProps> = ({
           <Plus className="h-4 w-4 mr-2" /> Agregar
         </Button>
       </div>
-      <FoodList foodEntries={foodEntries} date={formattedDate} mealType={mealType} />
+      <FoodList 
+        foods={foods} 
+        date={formattedDate} 
+        mealType={mealType} 
+      />
     </Card>
   );
 };

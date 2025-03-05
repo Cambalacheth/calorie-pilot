@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Camera, Mic, Search, Barcode, History, Check } from 'lucide-react';
@@ -9,11 +8,13 @@ import { toast } from 'sonner';
 import { Food, useFood } from '@/context/FoodContext';
 import { Label } from '@/components/ui/label';
 import FoodSearch from '@/components/FoodSearch';
+import BarcodeScanner from '@/components/BarcodeScanner';
 
 const AddFoodPage = () => {
   const navigate = useNavigate();
   const { foods, addFood } = useFood();
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
+  const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
   const [foodDetails, setFoodDetails] = useState<Partial<Food>>({
     name: '',
     calories: 0,
@@ -68,19 +69,57 @@ const AddFoodPage = () => {
     }, 2000);
   };
 
-  const handleBarcodeScanner = () => {
-    // In a real app, would use barcode scanning library
-    toast.info('Escaneando código de barras...');
+  const handleBarcodeScanned = (barcode: string) => {
+    // Handle the scanned barcode
+    setShowBarcodeScanner(false);
+    toast.info(`Buscando información para el código: ${barcode}`);
+    
+    // In a real app, you would fetch food data from an API using the barcode
+    // For demo purposes, we'll simulate a response after a delay
     setTimeout(() => {
-      setFoodDetails({
-        ...foodDetails,
-        name: 'Yogur Griego',
-        calories: 150,
-        protein: 15,
-        carbs: 10,
-        fat: 5,
-      });
-      toast.success('¡Producto escaneado! Verifica los detalles.');
+      // Simulate finding a product based on barcode
+      const mockProducts: Record<string, Partial<Food>> = {
+        '7790895000997': {
+          name: 'Yogur Griego Natural',
+          calories: 150,
+          protein: 15,
+          carbs: 10,
+          fat: 5,
+        },
+        '7791337005512': {
+          name: 'Barrita de Cereal',
+          calories: 120,
+          protein: 3,
+          carbs: 22,
+          fat: 4,
+        },
+        '7790742342100': {
+          name: 'Galletitas Integrales',
+          calories: 180,
+          protein: 4,
+          carbs: 30,
+          fat: 6,
+        },
+        // Add more mock products as needed
+      };
+      
+      const foundProduct = mockProducts[barcode];
+      
+      if (foundProduct) {
+        setFoodDetails({
+          ...foodDetails,
+          ...foundProduct,
+        });
+        toast.success('¡Producto encontrado! Verifica los detalles.');
+      } else {
+        setFoodDetails({
+          ...foodDetails,
+          name: `Producto (${barcode})`, // Set a default name with the barcode
+        });
+        toast.warning('Producto no encontrado en la base de datos. Por favor, completa la información manualmente.');
+      }
+      
+      setSelectedMethod('manual');
     }, 1500);
   };
 
@@ -151,6 +190,10 @@ const AddFoodPage = () => {
     toast.success('¡Alimento seleccionado! Puedes editar los detalles si lo necesitas.');
   };
 
+  const handleBarcodeScanner = () => {
+    setShowBarcodeScanner(true);
+  };
+
   return (
     <div className="container max-w-md mx-auto p-4 pb-20">
       <h1 className="text-2xl font-bold text-center mb-6 text-[#212121]">Añadir Alimento</h1>
@@ -193,7 +236,7 @@ const AddFoodPage = () => {
           <Button 
             variant="outline" 
             className="flex flex-col items-center p-6 h-auto border-2 hover:border-[#FF7043] hover:bg-orange-50"
-            onClick={() => setSelectedMethod('barcode')}
+            onClick={handleBarcodeScanner}
           >
             <Barcode size={32} className="mb-2 text-[#FF7043]" />
             <span>Escanear Código</span>
@@ -354,51 +397,12 @@ const AddFoodPage = () => {
         </div>
       )}
       
-      {/* Barcode scanner */}
-      {selectedMethod === 'barcode' && (
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold">Escanear Código</h2>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => setSelectedMethod(null)}
-            >
-              Cancelar
-            </Button>
-          </div>
-          
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 flex flex-col items-center">
-            <Barcode size={80} className="mb-4 text-gray-400" />
-            <p className="text-sm text-gray-500 mb-4 text-center">
-              Posiciona el código de barras frente a la cámara
-            </p>
-            <Button 
-              onClick={handleBarcodeScanner}
-              className="bg-[#FF7043] hover:bg-orange-600"
-            >
-              Iniciar Escáner
-            </Button>
-          </div>
-          
-          {/* Food details form if barcode detected something */}
-          {foodDetails.name && selectedMethod === 'barcode' && (
-            <div className="mt-4 space-y-4">
-              <h3 className="font-medium">Detalles del alimento</h3>
-              <FoodDetailsForm 
-                foodDetails={foodDetails} 
-                handleInputChange={handleInputChange}
-                handleMealTypeChange={handleMealTypeChange}
-              />
-              <Button 
-                className="w-full bg-[#FF7043] hover:bg-orange-600" 
-                onClick={handleAddFood}
-              >
-                <Check className="mr-2" /> Confirmar
-              </Button>
-            </div>
-          )}
-        </div>
+      {/* Barcode scanner modal */}
+      {showBarcodeScanner && (
+        <BarcodeScanner 
+          onDetected={handleBarcodeScanned}
+          onClose={() => setShowBarcodeScanner(false)}
+        />
       )}
       
       {/* Recent Foods */}
