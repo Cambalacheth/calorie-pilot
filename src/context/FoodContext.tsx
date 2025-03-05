@@ -33,6 +33,7 @@ interface FoodContextProps {
   streak: number;
   activeDates: string[];
   isLoading: boolean;
+  searchFoods: (term: string) => Food[];
 }
 
 const FoodContext = createContext<FoodContextProps | undefined>(undefined);
@@ -256,6 +257,25 @@ export const FoodProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const searchFoods = (term: string): Food[] => {
+    if (!term.trim()) return [];
+    
+    const uniqueFoodMap = new Map<string, Food>();
+    foods.forEach(food => {
+      const lowerName = food.name.toLowerCase();
+      if (!uniqueFoodMap.has(lowerName) || new Date(food.date) > new Date(uniqueFoodMap.get(lowerName)!.date)) {
+        uniqueFoodMap.set(lowerName, food);
+      }
+    });
+    
+    const uniqueFoods = Array.from(uniqueFoodMap.values());
+    
+    return uniqueFoods
+      .filter(food => food.name.toLowerCase().includes(term.toLowerCase()))
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, 5);
+  };
+
   const today = formatDate(new Date());
   const todayEntries = dailyLogs[today]?.entries || [];
   
@@ -277,7 +297,8 @@ export const FoodProvider: React.FC<{ children: React.ReactNode }> = ({ children
       clearFoods,
       streak,
       activeDates,
-      isLoading
+      isLoading,
+      searchFoods
     }}>
       {children}
     </FoodContext.Provider>

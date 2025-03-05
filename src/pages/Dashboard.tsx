@@ -1,630 +1,212 @@
-
-import React, { useState, useEffect } from 'react';
-import Layout from '@/components/Layout';
-import NutritionSummaryCard from '@/components/NutritionSummaryCard';
-import MacronutrientChart from '@/components/MacronutrientChart';
-import FoodList from '@/components/FoodList';
-import { useFood } from '@/context/FoodContext';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { CalendarIcon, Plus, Utensils, Coffee, Apple } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { 
-  Calendar as CalendarIcon, 
-  Camera, 
-  Settings, 
-  Bell, 
-  ChevronDown, 
-  PlusCircle,
-  BarChart2,
-  NotebookPen,
-  Brain,
-  BookOpenText,
-  ChevronLeft,
-  ChevronRight,
-  X
-} from 'lucide-react';
-import { format, subDays, addDays, startOfMonth, endOfMonth, startOfWeek, endOfWeek, isSameMonth, isSameDay, addMonths, subMonths } from 'date-fns';
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 import { es } from 'date-fns/locale';
-import DailyProgress from '@/components/DailyProgress';
-import { Card, CardContent } from '@/components/ui/card';
-import { Link, useNavigate } from 'react-router-dom';
+import DailyProgress from "@/components/DailyProgress";
+import MacronutrientChart from "@/components/MacronutrientChart";
+import MealTimeAnalysis from "@/components/MealTimeAnalysis";
+import BottomNavBar from "@/components/BottomNavBar";
+import Layout from "@/components/Layout";
+import FoodList from "@/components/FoodList";
+import { useFood } from "@/context/FoodContext";
+import StreakCounter from "@/components/StreakCounter";
+import FoodSearch from '@/components/FoodSearch';
+import { v4 as uuidv4 } from 'uuid';
 import { toast } from 'sonner';
-import { useAuth } from '@/context/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
 
 const Dashboard = () => {
-  const { foods, dailyCalories, dailyProtein, dailyCarbs, dailyFat } = useFood();
-  const [selectedMealType, setSelectedMealType] = useState<string | null>(null);
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [settingsUpdated, setSettingsUpdated] = useState(0);
-  const [calendarExpanded, setCalendarExpanded] = useState(false);
-  const [currentMonth, setCurrentMonth] = useState(new Date());
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const [userGoals, setUserGoals] = useState({
-    calorieGoal: 2000,
-    proteinGoal: 150,
-    carbsGoal: 200,
-    fatGoal: 65
-  });
-
-  const formattedDate = format(selectedDate, "'Hoy,' MMMM d", { locale: es });
-  const displayDate = format(selectedDate, "EEEE, MMMM d", { locale: es });
+  const { dailyLogs, dailyCalories, dailyProtein, dailyCarbs, dailyFat, addFood, streak } = useFood();
+  const [date, setDate] = useState<Date>(new Date());
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   
-  const handlePreviousDay = () => {
-    setSelectedDate(prev => subDays(prev, 1));
-  };
+  const selectedDateStr = format(date, 'yyyy-MM-dd');
+  const selectedDateFormatted = format(date, 'EEEE, d MMMM', { locale: es });
+  const isToday = selectedDateStr === format(new Date(), 'yyyy-MM-dd');
   
-  const handleNextDay = () => {
-    setSelectedDate(prev => addDays(prev, 1));
-  };
+  const dailyLog = dailyLogs[selectedDateStr] || { date: selectedDateStr, entries: [] };
+  
+  const breakfastEntries = dailyLog.entries.filter(food => food.mealType === 'breakfast');
+  const lunchEntries = dailyLog.entries.filter(food => food.mealType === 'lunch');
+  const dinnerEntries = dailyLog.entries.filter(food => food.mealType === 'dinner');
+  const snackEntries = dailyLog.entries.filter(food => food.mealType === 'snack' || !food.mealType);
 
-  const handleMealTypeFilter = (type: string) => {
-    setSelectedMealType(prevType => prevType === type ? null : type);
-  };
-
-  // Fetch user goals from Supabase
-  useEffect(() => {
-    const fetchUserGoals = async () => {
-      if (!user) return;
-      
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('calorie_goal, protein_goal, carbs_goal, fat_goal')
-          .eq('id', user.id)
-          .single();
-        
-        if (error) throw error;
-        
-        if (data) {
-          setUserGoals({
-            calorieGoal: data.calorie_goal || 2000,
-            proteinGoal: data.protein_goal || 150,
-            carbsGoal: data.carbs_goal || 200,
-            fatGoal: data.fat_goal || 65
-          });
-        }
-      } catch (error) {
-        console.error('Error fetching profile goals:', error);
-      }
+  const handleQuickAddFood = (selectedFood: any) => {
+    const newFood = {
+      ...selectedFood,
+      id: uuidv4(),
+      date: date,
     };
     
-    fetchUserGoals();
-  }, [user, settingsUpdated]);
-
-  // Function to handle settings button click
-  const handleSettingsClick = () => {
-    navigate('/settings');
-  };
-
-  // Function to handle notifications button click
-  const handleNotificationsClick = () => {
-    toast.info('Notificaciones próximamente', {
-      description: 'La función de notificaciones estará disponible pronto.'
-    });
-  };
-  
-  // Listen for settings changes via custom event
-  useEffect(() => {
-    const handleSettingsChange = () => {
-      setSettingsUpdated(prev => prev + 1);
-    };
-    
-    window.addEventListener('settings-updated', handleSettingsChange);
-    
-    return () => {
-      window.removeEventListener('settings-updated', handleSettingsChange);
-    };
-  }, []);
-
-  const calorieGoal = userGoals.calorieGoal;
-  const remainingCalories = Math.max(calorieGoal - dailyCalories, 0);
-  
-  // Filter foods by meal type
-  const getFoodsByMealType = (mealType: string) => {
-    return foods.filter(food => 
-      food.mealType === mealType && 
-      format(new Date(food.date), 'yyyy-MM-dd') === format(selectedDate, 'yyyy-MM-dd')
-    );
-  };
-  
-  const breakfastFoods = getFoodsByMealType('breakfast');
-  const lunchFoods = getFoodsByMealType('lunch');
-  const dinnerFoods = getFoodsByMealType('dinner');
-  const snackFoods = getFoodsByMealType('snack');
-
-  const handleAddFood = (mealType: string) => {
-    navigate(`/add-food?mealType=${mealType}`);
-  };
-
-  // Calendar functions
-  const handleToggleCalendar = () => {
-    setCalendarExpanded(!calendarExpanded);
-  };
-
-  const handlePrevMonth = () => {
-    setCurrentMonth(subMonths(currentMonth, 1));
-  };
-
-  const handleNextMonth = () => {
-    setCurrentMonth(addMonths(currentMonth, 1));
-  };
-
-  const renderCalendarHeader = () => {
-    return (
-      <div className="flex justify-between items-center mb-4">
-        <Button variant="ghost" size="sm" onClick={handlePrevMonth} className="text-emerald-600">
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-        
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium">
-            {format(currentMonth, 'MMMM yyyy', { locale: es })}
-          </span>
-        </div>
-        
-        <Button variant="ghost" size="sm" onClick={handleNextMonth} className="text-emerald-600">
-          <ChevronRight className="h-4 w-4" />
-        </Button>
-      </div>
-    );
-  };
-
-  const renderCalendarDays = () => {
-    const days = [];
-    const dayLabels = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-    
-    for (let i = 0; i < 7; i++) {
-      days.push(
-        <div key={`header-${i}`} className="text-center text-xs font-medium text-gray-500 w-10">
-          {dayLabels[i]}
-        </div>
-      );
-    }
-    
-    return <div className="grid grid-cols-7 gap-1 mb-2">{days}</div>;
-  };
-
-  const renderCalendarDates = () => {
-    const monthStart = startOfMonth(currentMonth);
-    const monthEnd = endOfMonth(monthStart);
-    const startDate = startOfWeek(monthStart);
-    const endDate = endOfWeek(monthEnd);
-    
-    const rows = [];
-    let days = [];
-    let day = startDate;
-    
-    while (day <= endDate) {
-      for (let i = 0; i < 7; i++) {
-        const currentDay = day;
-        days.push(
-          <div
-            key={day.toString()}
-            className={`text-center p-1 relative cursor-pointer w-10 h-10 flex items-center justify-center rounded-full
-              ${isSameMonth(day, monthStart) ? 'text-gray-900' : 'text-gray-400'}
-              ${isSameDay(day, selectedDate) ? 'bg-emerald-600 text-white' : ''}
-              ${!isSameDay(day, selectedDate) && isSameMonth(day, monthStart) ? 'hover:bg-emerald-100' : ''}
-            `}
-            onClick={() => {
-              setSelectedDate(currentDay);
-              if (calendarExpanded) {
-                setCalendarExpanded(false);
-              }
-            }}
-          >
-            {format(day, 'd')}
-          </div>
-        );
-        day = addDays(day, 1);
-      }
-      rows.push(
-        <div key={day.toString()} className="grid grid-cols-7 gap-1">
-          {days}
-        </div>
-      );
-      days = [];
-    }
-    
-    return <div className="space-y-1">{rows}</div>;
+    addFood(newFood);
+    toast.success(`${selectedFood.name} añadido a ${selectedDateFormatted}`);
   };
 
   return (
-    <div className="min-h-screen bg-emerald-800 text-white flex flex-col">
-      {/* Header */}
-      <header className="p-4 flex justify-between items-center">
-        <div className="flex items-center">
-          <h1 className="text-2xl font-bold">Cal AI</h1>
-          <span className="ml-2 bg-emerald-700/50 text-white px-1.5 py-0.5 rounded-md text-xs font-medium">AI</span>
+    <Layout>
+      <div className="max-w-md mx-auto p-4 pb-20">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex-1">
+            <h1 className="text-xl font-bold text-[#212121]">Mi Diario</h1>
+            <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="flex items-center p-0 h-auto font-normal"
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4 text-[#FF7043]" />
+                  <span className="text-[#424242]">{selectedDateFormatted}</span>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={date}
+                  onSelect={(newDate) => {
+                    if (newDate) {
+                      setDate(newDate);
+                      setIsCalendarOpen(false);
+                    }
+                  }}
+                  className="rounded-md border"
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+          
+          <div>
+            <StreakCounter streak={streak} />
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="text-white hover:bg-emerald-700"
-            onClick={handleSettingsClick}
-          >
-            <Settings className="h-5 w-5" />
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="text-white hover:bg-emerald-700"
-            onClick={handleNotificationsClick}
-          >
-            <Bell className="h-5 w-5" />
-          </Button>
-        </div>
-      </header>
-      
-      <div className="p-2 text-center text-sm text-emerald-200">
-        {formattedDate}
-      </div>
 
-      {/* Main Circular Progress */}
-      <div className="flex flex-col items-center justify-center px-4 py-6">
-        <div className="relative w-60 h-60 flex items-center justify-center">
-          <svg className="w-full h-full" viewBox="0 0 100 100">
-            <circle 
-              cx="50" 
-              cy="50" 
-              r="45" 
-              fill="none" 
-              stroke="rgba(255,255,255,0.2)" 
-              strokeWidth="5" 
-            />
-            <circle 
-              cx="50" 
-              cy="50" 
-              r="45" 
-              fill="none" 
-              stroke="rgba(255,255,255,0.8)" 
-              strokeWidth="5" 
-              strokeDasharray={`${(dailyCalories / calorieGoal) * 283} 283`} 
-              strokeLinecap="round" 
-              transform="rotate(-90 50 50)" 
-            />
-          </svg>
-          <div className="absolute text-center">
-            <div className="text-4xl font-bold">{remainingCalories}</div>
-            <div className="text-sm opacity-80">KCAL RESTANTES</div>
-          </div>
-          
-          {/* Moved outside the circle to prevent overlapping */}
-          <div className="absolute -top-10 left-1/2 -translate-x-1/2 text-center text-xs bg-emerald-700/70 px-3 py-1 rounded-full">
-            <div className="font-bold text-sm">0</div>
-            <div className="opacity-70">QUEMADAS</div>
-          </div>
-          
-          <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 text-center text-xs bg-emerald-700/70 px-3 py-1 rounded-full">
-            <div className="font-bold text-sm">{dailyCalories}</div>
-            <div className="opacity-70">CONSUMIDAS</div>
-          </div>
+        {/* Búsqueda rápida para agregar alimentos */}
+        <div className="mb-6">
+          <FoodSearch 
+            onFoodSelect={handleQuickAddFood} 
+            placeholder="Buscar y agregar alimento rápidamente..."
+          />
         </div>
         
-        {/* Macronutrients Display */}
-        <div className="w-full mt-8 grid grid-cols-3 gap-4 text-center">
-          <div>
-            <div className="uppercase text-xs opacity-70">Carbos</div>
-            <div className="font-semibold">{dailyCarbs.toFixed(1)}g</div>
-            <div className="h-1 bg-white/20 rounded mt-1">
-              <div 
-                className="h-full bg-white rounded" 
-                style={{ width: `${Math.min((dailyCarbs / userGoals.carbsGoal) * 100, 100)}%` }}
-              ></div>
-            </div>
-          </div>
-          
-          <div>
-            <div className="uppercase text-xs opacity-70">Proteína</div>
-            <div className="font-semibold">{dailyProtein.toFixed(1)}g</div>
-            <div className="h-1 bg-white/20 rounded mt-1">
-              <div 
-                className="h-full bg-white rounded" 
-                style={{ width: `${Math.min((dailyProtein / userGoals.proteinGoal) * 100, 100)}%` }}
-              ></div>
-            </div>
-          </div>
-          
-          <div>
-            <div className="uppercase text-xs opacity-70">Grasa</div>
-            <div className="font-semibold">{dailyFat.toFixed(1)}g</div>
-            <div className="h-1 bg-white/20 rounded mt-1">
-              <div 
-                className="h-full bg-white rounded" 
-                style={{ width: `${Math.min((dailyFat / userGoals.fatGoal) * 100, 100)}%` }}
-              ></div>
-            </div>
-          </div>
+        {/* Progreso Diario */}
+        <DailyProgress
+          dailyCalories={dailyCalories}
+          dailyProtein={dailyProtein}
+          dailyCarbs={dailyCarbs}
+          dailyFat={dailyFat}
+          date={date}
+        />
+
+        {/* Macronutrientes */}
+        <div className="my-6">
+          <MacronutrientChart
+            protein={dailyProtein}
+            carbs={dailyCarbs}
+            fat={dailyFat}
+          />
         </div>
-      </div>
-      
-      {/* White Content Area */}
-      <div className="flex-1 bg-white text-slate-800 rounded-t-3xl p-4 pb-20">
-        {/* Date Navigation */}
-        <div className="flex justify-between items-center mt-2 mb-4">
-          <Button variant="ghost" size="sm" onClick={handlePreviousDay} className="text-emerald-600">
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          
-          <div 
-            className="flex items-center gap-2 cursor-pointer"
-            onClick={handleToggleCalendar}
-          >
-            <CalendarIcon className="h-4 w-4 text-emerald-600" />
-            <span className="text-sm font-medium">{displayDate}</span>
-            <ChevronDown className={`h-3 w-3 text-emerald-600 transition-transform ${calendarExpanded ? 'rotate-180' : ''}`} />
-          </div>
-          
-          <Button variant="ghost" size="sm" onClick={handleNextDay} className="text-emerald-600">
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-        
-        {/* Expanded Calendar */}
-        {calendarExpanded && (
-          <div className="mb-6 bg-white rounded-lg shadow-lg p-4 animate-in fade-in-0 zoom-in-95 duration-200">
-            <div className="flex justify-between items-center mb-2">
-              <h3 className="font-medium">Calendario</h3>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-6 w-6"
-                onClick={() => setCalendarExpanded(false)}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            {renderCalendarHeader()}
-            {renderCalendarDays()}
-            {renderCalendarDates()}
-          </div>
-        )}
-        
-        {/* Meal Sections */}
+
+        {/* Comidas del día */}
         <div className="space-y-4">
-          {/* Breakfast Section */}
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <h3 className="text-md font-medium text-slate-700">Desayuno</h3>
-            </div>
-            
-            {breakfastFoods.length > 0 ? (
-              <div className="space-y-2">
-                {breakfastFoods.map(food => (
-                  <Card key={food.id} className="shadow-sm overflow-hidden">
-                    <CardContent className="p-3 flex justify-between items-center">
-                      <div className="flex items-center gap-3">
-                        <div className="bg-blue-100 p-2 rounded-lg w-12 h-12 flex items-center justify-center overflow-hidden">
-                          {food.image ? (
-                            <img src={food.image} alt={food.name} className="w-full h-full object-cover" />
-                          ) : (
-                            <img src="/lovable-uploads/0a8a6a5b-8c67-43e2-8540-2330a7747ec9.png" alt="Food" className="w-6 h-6" />
-                          )}
-                        </div>
-                        <div>
-                          <div className="font-medium">{food.name}</div>
-                          <div className="flex gap-2 text-xs text-slate-500">
-                            <span>{food.calories} kcal</span>
-                            <span className="text-indigo-600">{food.protein}g P</span>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <Card 
-                className="shadow-sm cursor-pointer hover:bg-slate-50 transition-colors"
-                onClick={() => handleAddFood('breakfast')}
-              >
-                <CardContent className="p-3 flex justify-between items-center">
-                  <div className="flex items-center gap-3">
-                    <div className="bg-blue-100 p-2 rounded-lg">
-                      <img src="/lovable-uploads/0a8a6a5b-8c67-43e2-8540-2330a7747ec9.png" alt="Breakfast" className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <div className="font-medium">Añadir desayuno</div>
-                      <div className="text-xs text-slate-500">Recomendado: 640 - 675 kcal</div>
-                    </div>
-                  </div>
-                  <PlusCircle className="h-5 w-5 text-emerald-600" />
-                </CardContent>
-              </Card>
-            )}
-          </div>
+          {/* Desayuno */}
+          <MealSection
+            title="Desayuno"
+            icon={<Coffee className="h-5 w-5" />}
+            foodEntries={breakfastEntries}
+            onAddClick={() => {
+              navigate('/add', { state: { mealType: 'breakfast', date } });
+            }}
+            date={date}
+            mealType="breakfast"
+          />
           
-          {/* Lunch Section */}
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <h3 className="text-md font-medium text-slate-700">Almuerzo</h3>
-            </div>
-            
-            {lunchFoods.length > 0 ? (
-              <div className="space-y-2">
-                {lunchFoods.map(food => (
-                  <Card key={food.id} className="shadow-sm overflow-hidden">
-                    <CardContent className="p-3 flex justify-between items-center">
-                      <div className="flex items-center gap-3">
-                        <div className="bg-orange-100 p-2 rounded-lg w-12 h-12 flex items-center justify-center overflow-hidden">
-                          {food.image ? (
-                            <img src={food.image} alt={food.name} className="w-full h-full object-cover" />
-                          ) : (
-                            <img src="/lovable-uploads/0a8a6a5b-8c67-43e2-8540-2330a7747ec9.png" alt="Food" className="w-6 h-6" />
-                          )}
-                        </div>
-                        <div>
-                          <div className="font-medium">{food.name}</div>
-                          <div className="flex gap-2 text-xs text-slate-500">
-                            <span>{food.calories} kcal</span>
-                            <span className="text-indigo-600">{food.protein}g P</span>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <Card 
-                className="shadow-sm cursor-pointer hover:bg-slate-50 transition-colors"
-                onClick={() => handleAddFood('lunch')}
-              >
-                <CardContent className="p-3 flex justify-between items-center">
-                  <div className="flex items-center gap-3">
-                    <div className="bg-orange-100 p-2 rounded-lg">
-                      <img src="/lovable-uploads/0a8a6a5b-8c67-43e2-8540-2330a7747ec9.png" alt="Lunch" className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <div className="font-medium">Añadir almuerzo</div>
-                      <div className="text-xs text-slate-500">Recomendado: 697 - 703 kcal</div>
-                    </div>
-                  </div>
-                  <PlusCircle className="h-5 w-5 text-emerald-600" />
-                </CardContent>
-              </Card>
-            )}
-          </div>
+          {/* Almuerzo */}
+          <MealSection
+            title="Almuerzo"
+            icon={<Utensils className="h-5 w-5" />}
+            foodEntries={lunchEntries}
+            onAddClick={() => {
+              navigate('/add', { state: { mealType: 'lunch', date } });
+            }}
+            date={date}
+            mealType="lunch"
+          />
           
-          {/* Dinner Section */}
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <h3 className="text-md font-medium text-slate-700">Cena</h3>
-            </div>
-            
-            {dinnerFoods.length > 0 ? (
-              <div className="space-y-2">
-                {dinnerFoods.map(food => (
-                  <Card key={food.id} className="shadow-sm overflow-hidden">
-                    <CardContent className="p-3 flex justify-between items-center">
-                      <div className="flex items-center gap-3">
-                        <div className="bg-purple-100 p-2 rounded-lg w-12 h-12 flex items-center justify-center overflow-hidden">
-                          {food.image ? (
-                            <img src={food.image} alt={food.name} className="w-full h-full object-cover" />
-                          ) : (
-                            <img src="/lovable-uploads/0a8a6a5b-8c67-43e2-8540-2330a7747ec9.png" alt="Food" className="w-6 h-6" />
-                          )}
-                        </div>
-                        <div>
-                          <div className="font-medium">{food.name}</div>
-                          <div className="flex gap-2 text-xs text-slate-500">
-                            <span>{food.calories} kcal</span>
-                            <span className="text-indigo-600">{food.protein}g P</span>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <Card 
-                className="shadow-sm cursor-pointer hover:bg-slate-50 transition-colors"
-                onClick={() => handleAddFood('dinner')}
-              >
-                <CardContent className="p-3 flex justify-between items-center">
-                  <div className="flex items-center gap-3">
-                    <div className="bg-purple-100 p-2 rounded-lg">
-                      <img src="/lovable-uploads/0a8a6a5b-8c67-43e2-8540-2330a7747ec9.png" alt="Dinner" className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <div className="font-medium">Añadir cena</div>
-                      <div className="text-xs text-slate-500">Recomendado: 597 - 603 kcal</div>
-                    </div>
-                  </div>
-                  <PlusCircle className="h-5 w-5 text-emerald-600" />
-                </CardContent>
-              </Card>
-            )}
-          </div>
+          {/* Cena */}
+          <MealSection
+            title="Cena"
+            icon={<Utensils className="h-5 w-5" />}
+            foodEntries={dinnerEntries}
+            onAddClick={() => {
+              navigate('/add', { state: { mealType: 'dinner', date } });
+            }}
+            date={date}
+            mealType="dinner"
+          />
           
-          {/* Snacks Section */}
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <h3 className="text-md font-medium text-slate-700">Snacks</h3>
-            </div>
-            
-            {snackFoods.length > 0 ? (
-              <div className="space-y-2">
-                {snackFoods.map(food => (
-                  <Card key={food.id} className="shadow-sm overflow-hidden">
-                    <CardContent className="p-3 flex justify-between items-center">
-                      <div className="flex items-center gap-3">
-                        <div className="bg-green-100 p-2 rounded-lg w-12 h-12 flex items-center justify-center overflow-hidden">
-                          {food.image ? (
-                            <img src={food.image} alt={food.name} className="w-full h-full object-cover" />
-                          ) : (
-                            <img src="/lovable-uploads/0a8a6a5b-8c67-43e2-8540-2330a7747ec9.png" alt="Food" className="w-6 h-6" />
-                          )}
-                        </div>
-                        <div>
-                          <div className="font-medium">{food.name}</div>
-                          <div className="flex gap-2 text-xs text-slate-500">
-                            <span>{food.calories} kcal</span>
-                            <span className="text-indigo-600">{food.protein}g P</span>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <Card 
-                className="shadow-sm cursor-pointer hover:bg-slate-50 transition-colors"
-                onClick={() => handleAddFood('snack')}
-              >
-                <CardContent className="p-3 flex justify-between items-center">
-                  <div className="flex items-center gap-3">
-                    <div className="bg-green-100 p-2 rounded-lg">
-                      <img src="/lovable-uploads/0a8a6a5b-8c67-43e2-8540-2330a7747ec9.png" alt="Snack" className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <div className="font-medium">Añadir snack</div>
-                      <div className="text-xs text-slate-500">Recomendado: 100 - 200 kcal</div>
-                    </div>
-                  </div>
-                  <PlusCircle className="h-5 w-5 text-emerald-600" />
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        </div>
-      </div>
-      
-      {/* Bottom Navigation Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-[#FFF8E1] text-[#212121] border-t shadow-lg flex justify-around items-center px-2 z-10">
-        <Link to="/dashboard" className="flex flex-col items-center py-2 px-3 text-center">
-          <NotebookPen className="h-6 w-6 text-[#FF7043]" />
-          <span className="text-xs mt-1 font-medium">Diario</span>
-        </Link>
-        
-        <Link to="/analysis" className="flex flex-col items-center py-2 px-3 text-center">
-          <BarChart2 className="h-6 w-6" />
-          <span className="text-xs mt-1">Progreso</span>
-        </Link>
-        
-        <div className="flex flex-col items-center -mt-5">
-          <Link 
-            to="/add-food" 
-            className="w-14 h-14 rounded-full bg-[#FF7043] flex items-center justify-center shadow-lg border-4 border-[#FFF8E1]"
-          >
-            <PlusCircle className="h-8 w-8 text-white" />
-          </Link>
-          <span className="text-xs mt-1">Añadir</span>
+          {/* Snacks */}
+          <MealSection
+            title="Snacks"
+            icon={<Apple className="h-5 w-5" />}
+            foodEntries={snackEntries}
+            onAddClick={() => {
+              navigate('/add', { state: { mealType: 'snack', date } });
+            }}
+            date={date}
+            mealType="snack"
+          />
         </div>
         
-        <Link to="/nutrient-analysis" className="flex flex-col items-center py-2 px-3 text-center">
-          <Brain className="h-6 w-6" />
-          <span className="text-xs mt-1">Análisis</span>
-        </Link>
-        
-        <Link to="/recipes" className="flex flex-col items-center py-2 px-3 text-center">
-          <BookOpenText className="h-6 w-6" />
-          <span className="text-xs mt-1">Recetas</span>
-        </Link>
+        {/* Análisis de tiempo de comidas (más detallado) */}
+        <div className="mt-6">
+          <MealTimeAnalysis />
+        </div>
       </div>
-    </div>
+      <BottomNavBar />
+    </Layout>
+  );
+};
+
+// MealSection Component
+interface MealSectionProps {
+  title: string;
+  icon: React.ReactNode;
+  foodEntries: any[];
+  onAddClick: () => void;
+  date: Date;
+  mealType: string;
+}
+
+const MealSection: React.FC<MealSectionProps> = ({
+  title,
+  icon,
+  foodEntries,
+  onAddClick,
+  date,
+  mealType,
+}) => {
+  const formattedDate = format(date, 'yyyy-MM-dd');
+
+  return (
+    <Card className="shadow-sm">
+      <div className="flex items-center justify-between p-3">
+        <div className="flex items-center">
+          {icon}
+          <h2 className="text-lg font-semibold ml-2 text-[#424242]">{title}</h2>
+        </div>
+        <Button size="sm" onClick={onAddClick}>
+          <Plus className="h-4 w-4 mr-2" /> Agregar
+        </Button>
+      </div>
+      <FoodList foodEntries={foodEntries} date={formattedDate} mealType={mealType} />
+    </Card>
   );
 };
 

@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Food, useFood } from '@/context/FoodContext';
 import { Label } from '@/components/ui/label';
+import FoodSearch from '@/components/FoodSearch';
 
 const AddFoodPage = () => {
   const navigate = useNavigate();
@@ -132,9 +133,32 @@ const AddFoodPage = () => {
     navigate('/dashboard');
   };
 
+  const handleFoodSelect = (selectedFood: Food) => {
+    setFoodDetails({
+      name: selectedFood.name,
+      calories: selectedFood.calories,
+      protein: selectedFood.protein,
+      carbs: selectedFood.carbs,
+      fat: selectedFood.fat,
+      mealType: foodDetails.mealType || selectedFood.mealType || 'snack',
+    });
+    
+    if (selectedFood.image) {
+      setPreviewUrl(selectedFood.image);
+    }
+    
+    setSelectedMethod('manual');
+    toast.success('¡Alimento seleccionado! Puedes editar los detalles si lo necesitas.');
+  };
+
   return (
     <div className="container max-w-md mx-auto p-4 pb-20">
       <h1 className="text-2xl font-bold text-center mb-6 text-[#212121]">Añadir Alimento</h1>
+      
+      {/* Search Bar */}
+      <div className="mb-6">
+        <FoodSearch onFoodSelect={handleFoodSelect} placeholder="Buscar alimentos previos..." />
+      </div>
       
       {/* Quick selector methods */}
       {!selectedMethod && (
@@ -313,18 +337,6 @@ const AddFoodPage = () => {
             >
               Cancelar
             </Button>
-          </div>
-          
-          <div className="relative">
-            <Input 
-              type="text" 
-              placeholder="Buscar alimento..." 
-              className="pl-10"
-              value={foodDetails.name || ''}
-              name="name"
-              onChange={handleInputChange}
-            />
-            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
           </div>
           
           <FoodDetailsForm 
