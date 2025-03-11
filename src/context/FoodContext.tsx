@@ -13,6 +13,8 @@ export interface Food {
   image?: string;
   mealType?: string; // breakfast, lunch, dinner, snack
   userId?: string; // Add userId to the interface
+  fiber?: number; // Added fiber property
+  insights?: string[]; // Added insights property
 }
 
 export interface FoodLog {
@@ -77,7 +79,9 @@ export const FoodProvider: React.FC<{ children: React.ReactNode }> = ({ children
             date: new Date(item.date),
             mealType: item.meal_type,
             image: item.image_url,
-            userId: item.user_id
+            userId: item.user_id,
+            fiber: item.fiber,
+            insights: item.insights
           }));
           setFoods(formattedFoods);
           
@@ -133,7 +137,9 @@ export const FoodProvider: React.FC<{ children: React.ReactNode }> = ({ children
           date: formatDate(food.date),
           meal_type: food.mealType || 'snack',
           image_url: food.image,
-          user_id: userId
+          user_id: userId,
+          fiber: food.fiber,
+          insights: food.insights
         })
         .select()
         .single();
@@ -153,7 +159,9 @@ export const FoodProvider: React.FC<{ children: React.ReactNode }> = ({ children
         date: new Date(data.date),
         mealType: data.meal_type,
         image: data.image_url,
-        userId: data.user_id
+        userId: data.user_id,
+        fiber: data.fiber,
+        insights: data.insights
       };
 
       setFoods(prevFoods => [newFood, ...prevFoods]);

@@ -3,19 +3,21 @@ import React from 'react';
 import MacronutrientChart from '@/components/MacronutrientChart';
 import MealTimeAnalysis from '@/components/MealTimeAnalysis';
 
+interface MealEntry {
+  meal: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  fiber: number;
+  insights: string[];
+}
+
 interface DashboardChartsProps {
   dailyProtein: number;
   dailyCarbs: number;
   dailyFat: number;
-  mealData: {
-    meal: string;
-    calories: number;
-    protein: number;
-    carbs: number;
-    fat: number;
-    fiber: number;
-    insights: string[];
-  }[];
+  mealData: MealEntry[];
 }
 
 const DashboardCharts: React.FC<DashboardChartsProps> = ({ 

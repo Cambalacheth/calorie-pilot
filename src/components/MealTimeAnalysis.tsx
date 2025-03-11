@@ -1,9 +1,9 @@
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 
 interface MealEntry {
+  meal: string;
   calories: number;
   protein: number;
   carbs: number;
@@ -13,15 +13,7 @@ interface MealEntry {
 }
 
 export interface MealTimeAnalysisProps {
-  mealData: {
-    meal: string;
-    calories: number;
-    protein: number;
-    carbs: number;
-    fat: number;
-    fiber: number;
-    insights: string[];
-  }[];
+  mealData: MealEntry[];
 }
 
 const MealTimeAnalysis: React.FC<MealTimeAnalysisProps> = ({ mealData }) => {
@@ -108,4 +100,3 @@ const MealTimeAnalysis: React.FC<MealTimeAnalysisProps> = ({ mealData }) => {
 };
 
 export default MealTimeAnalysis;
-
